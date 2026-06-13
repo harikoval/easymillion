@@ -68,9 +68,62 @@
   .s0-brand { text-align: center; }
   .s0-btn {
     position: absolute;
-    top: 50%; left: 28px; right: 28px;
+    top: 50%; left: 10%; right: 10%;
     transform: translateY(-50%);
     pointer-events: all;
+  }
+
+  /* Ticker marquee */
+  .s0-ticker {
+    position: absolute;
+    top: calc(max(52px, env(safe-area-inset-top, 52px)) + 80px);
+    left: 0; right: 0;
+    overflow: hidden;
+    z-index: 2;
+    pointer-events: none;
+    mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+  }
+  .s0-ticker-inner {
+    display: flex; white-space: nowrap;
+    animation: tickerScroll 22s linear infinite;
+  }
+  .s0-ticker-inner span {
+    font-size: 11px; letter-spacing: 2px;
+    color: var(--blue);
+    text-shadow: 0 0 8px rgba(0,180,255,0.6);
+    padding-right: 48px;
+  }
+  @keyframes tickerScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  /* Price label */
+  #chartPrice {
+    position: absolute;
+    z-index: 2;
+    right: 10px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 1px;
+    color: rgba(0,255,136,0.85);
+    text-shadow: 0 0 8px rgba(0,255,136,0.5);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+    background: rgba(10,10,15,0.6);
+    padding: 2px 6px; border-radius: 4px;
+  }
+
+  /* Footer tagline */
+  .s0-footer {
+    position: absolute;
+    bottom: max(14px, env(safe-area-inset-bottom, 14px));
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 10px; letter-spacing: 2px;
+    color: var(--muted);
+    z-index: 2; pointer-events: none;
+    text-transform: uppercase;
   }
 
   /* ── SCREEN 1: PAIR SELECTION ── */
@@ -619,15 +672,26 @@
   <canvas id="chartCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:0"></canvas>
   <div style="position:absolute;top:0;left:0;right:0;height:74%;background:linear-gradient(to bottom,var(--bg) 65%,transparent);pointer-events:none;z-index:1"></div>
   <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,var(--bg) 60%);pointer-events:none;z-index:1"></div>
+  <!-- Ticker -->
+  <div class="s0-ticker">
+    <div class="s0-ticker-inner">
+      <span>EUR/USD • GBP/USD • USD/JPY • USD/CHF • AUD/USD • EUR/JPY • GBP/JPY • NZD/USD • EUR/GBP • USD/CAD • GBP/AUD • EUR/AUD •&nbsp;</span>
+      <span>EUR/USD • GBP/USD • USD/JPY • USD/CHF • AUD/USD • EUR/JPY • GBP/JPY • NZD/USD • EUR/GBP • USD/CAD • GBP/AUD • EUR/AUD •&nbsp;</span>
+    </div>
+  </div>
+  <!-- Price label (positioned by JS) -->
+  <div id="chartPrice"></div>
+  <!-- Foreground -->
   <div class="s0-content">
     <div class="s0-brand">
       <div class="home-logo">EASY MILLION</div>
       <div class="home-subtitle">AI-Powered Trading Signals</div>
     </div>
     <div class="s0-btn">
-      <button class="home-get-btn" onclick="transitionTo('s0','s1')">GET AI SIGNAL</button>
+      <button class="home-get-btn" onclick="transitionTo('s0','s1')">⚡ GET AI SIGNAL</button>
     </div>
   </div>
+  <div class="s0-footer">Powered by AI • Real-time signals</div>
 </div>
 
 <!-- SCREEN 1: Pair Selection -->
@@ -1032,6 +1096,17 @@
       };
     }
 
+    // Price label
+    const priceEl = document.getElementById('chartPrice');
+    let fakePrice = 1.0842;
+    function updatePrice() {
+      fakePrice += (Math.random() - 0.5) * 0.0012;
+      fakePrice = Math.max(1.06, Math.min(1.12, fakePrice));
+      priceEl.textContent = fakePrice.toFixed(4);
+    }
+    updatePrice();
+    setInterval(updatePrice, 2800);
+
     let seed = midY;
     for (let i = 0; i < Math.ceil(W / STEP) + 4; i++) {
       const c = newCandle(i * STEP, seed); candles.push(c); seed = c.c;
@@ -1067,6 +1142,9 @@
         ctx.fillStyle = bodyColor;
         ctx.fillRect(x, top, CW, bh);
       }
+
+      // Keep price label aligned to mid-price line
+      priceEl.style.top = (midY - 9) + 'px';
 
       offset += SPEED;
       const last = candles[candles.length - 1];
