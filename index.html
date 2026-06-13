@@ -68,15 +68,21 @@
   .s0-brand { text-align: center; }
   .s0-btn {
     position: absolute;
-    top: 50%; left: 10%; right: 10%;
+    top: 45%; left: 10%; right: 10%;
     transform: translateY(-50%);
     pointer-events: all;
+  }
+  .s0-btn .home-get-btn {
+    height: 48px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    border-radius: 14px;
   }
 
   /* Ticker marquee */
   .s0-ticker {
     position: absolute;
-    top: calc(max(52px, env(safe-area-inset-top, 52px)) + 80px);
+    top: calc(45% + 30px);
     left: 0; right: 0;
     overflow: hidden;
     z-index: 2;
