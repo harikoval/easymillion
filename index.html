@@ -695,9 +695,13 @@
     color: var(--text); font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
   }
   .analysis-toggle:active { background: rgba(255,255,255,0.03); }
-  .analysis-chevron { font-size: 16px; color: var(--muted); transition: transform 0.25s; display: inline-block; }
+  .analysis-chevron { font-size: 16px; color: var(--muted); transition: transform 0.3s ease; display: inline-block; }
   .analysis-chevron.open { transform: rotate(90deg); }
-  .analysis-body { padding: 0 14px 12px; }
+  .analysis-body {
+    padding: 0 14px 12px;
+    overflow: hidden;
+    transition: max-height 0.35s ease, opacity 0.25s ease;
+  }
   .analysis-summary {
     font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
     color: var(--muted); padding-bottom: 9px;
@@ -944,7 +948,7 @@
       <span>📊 Analysis Details</span>
       <span class="analysis-chevron" id="analysisChevron">›</span>
     </button>
-    <div class="analysis-body" id="analysisBody" style="display:none">
+    <div class="analysis-body" id="analysisBody" data-open="false" style="max-height:0;opacity:0">
       <div class="analysis-summary" id="analysisSummary"></div>
       <div id="analysisIndicators"></div>
     </div>
@@ -1358,14 +1362,47 @@
   function toggleAnalysis() {
     const body = document.getElementById('analysisBody');
     const chevron = document.getElementById('analysisChevron');
-    const open = body.style.display === 'none';
-    body.style.display = open ? 'block' : 'none';
-    chevron.classList.toggle('open', open);
+    const isOpen = body.dataset.open === 'true';
+
+    if (!isOpen) {
+      // Expand: measure natural height, animate to it
+      body.dataset.open = 'true';
+      chevron.classList.add('open');
+      const h = body.scrollHeight;
+      body.style.maxHeight = h + 'px';
+      body.style.opacity = '1';
+      // After transition completes, remove fixed height so content can reflow freely
+      setTimeout(() => {
+        if (body.dataset.open === 'true') body.style.maxHeight = 'none';
+      }, 370);
+    } else {
+      // Collapse: if maxHeight is 'none', lock it to scrollHeight first so
+      // the browser has a defined start point for the transition
+      body.dataset.open = 'false';
+      chevron.classList.remove('open');
+      if (!body.style.maxHeight || body.style.maxHeight === 'none') {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        body.offsetHeight; // force reflow so the above value is painted
+      }
+      requestAnimationFrame(() => {
+        body.style.maxHeight = '0px';
+        body.style.opacity = '0';
+      });
+    }
+
+    try { window.Telegram?.WebApp?.HapticFeedback?.selectionChanged(); } catch(e) {}
   }
 
   function collapseAnalysis() {
-    document.getElementById('analysisBody').style.display = 'none';
+    const body = document.getElementById('analysisBody');
+    // Instant reset — disable transition for this frame so there's no
+    // visible animation when navigating away from s3
+    body.style.transition = 'none';
+    body.dataset.open = 'false';
+    body.style.maxHeight = '0px';
+    body.style.opacity = '0';
     document.getElementById('analysisChevron').classList.remove('open');
+    requestAnimationFrame(() => { body.style.transition = ''; });
   }
 
   function showAnalysis(data) {
