@@ -703,8 +703,8 @@
   <!-- Ticker -->
   <div class="s0-ticker">
     <div class="s0-ticker-inner">
-      <span>EUR/USD • GBP/USD • USD/JPY • USD/CHF • AUD/USD • EUR/JPY • GBP/JPY • NZD/USD • EUR/GBP • USD/CAD • GBP/AUD • EUR/AUD •&nbsp;</span>
-      <span>EUR/USD • GBP/USD • USD/JPY • USD/CHF • AUD/USD • EUR/JPY • GBP/JPY • NZD/USD • EUR/GBP • USD/CAD • GBP/AUD • EUR/AUD •&nbsp;</span>
+      <span>EUR/USD • GBP/USD • USD/CHF • USD/CAD • EUR/GBP • AUD/USD • EUR/JPY • GBP/JPY • AUD/JPY • EUR/AUD • EUR/CAD • GBP/AUD • GBP/CAD • AUD/CHF • CHF/JPY • GBP/CHF • AUD/CAD • EUR/CHF • CAD/CHF • CAD/JPY •&nbsp;</span>
+      <span>EUR/USD • GBP/USD • USD/CHF • USD/CAD • EUR/GBP • AUD/USD • EUR/JPY • GBP/JPY • AUD/JPY • EUR/AUD • EUR/CAD • GBP/AUD • GBP/CAD • AUD/CHF • CHF/JPY • GBP/CHF • AUD/CAD • EUR/CHF • CAD/CHF • CAD/JPY •&nbsp;</span>
     </div>
   </div>
   <!-- Price label (positioned by JS) -->
@@ -881,21 +881,24 @@
   const pairs = [
     { name:'EUR/USD', flags:'🇪🇺🇺🇸', base:'Euro', quote:'US Dollar' },
     { name:'GBP/USD', flags:'🇬🇧🇺🇸', base:'British Pound', quote:'US Dollar' },
-    { name:'USD/JPY', flags:'🇺🇸🇯🇵', base:'US Dollar', quote:'Japanese Yen' },
     { name:'USD/CHF', flags:'🇺🇸🇨🇭', base:'US Dollar', quote:'Swiss Franc' },
     { name:'USD/CAD', flags:'🇺🇸🇨🇦', base:'US Dollar', quote:'Canadian Dollar' },
     { name:'EUR/GBP', flags:'🇪🇺🇬🇧', base:'Euro', quote:'British Pound' },
     { name:'AUD/USD', flags:'🇦🇺🇺🇸', base:'Australian Dollar', quote:'US Dollar' },
     { name:'EUR/JPY', flags:'🇪🇺🇯🇵', base:'Euro', quote:'Japanese Yen' },
     { name:'GBP/JPY', flags:'🇬🇧🇯🇵', base:'British Pound', quote:'Japanese Yen' },
-    { name:'NZD/USD', flags:'🇳🇿🇺🇸', base:'New Zealand Dollar', quote:'US Dollar' },
-    { name:'EUR/AUD', flags:'🇪🇺🇦🇺', base:'Euro', quote:'Australian Dollar' },
     { name:'AUD/JPY', flags:'🇦🇺🇯🇵', base:'Australian Dollar', quote:'Japanese Yen' },
+    { name:'EUR/AUD', flags:'🇪🇺🇦🇺', base:'Euro', quote:'Australian Dollar' },
     { name:'EUR/CAD', flags:'🇪🇺🇨🇦', base:'Euro', quote:'Canadian Dollar' },
     { name:'GBP/AUD', flags:'🇬🇧🇦🇺', base:'British Pound', quote:'Australian Dollar' },
     { name:'GBP/CAD', flags:'🇬🇧🇨🇦', base:'British Pound', quote:'Canadian Dollar' },
-    { name:'EUR/NZD', flags:'🇪🇺🇳🇿', base:'Euro', quote:'New Zealand Dollar' },
-    { name:'GBP/NZD', flags:'🇬🇧🇳🇿', base:'British Pound', quote:'New Zealand Dollar' },
+    { name:'AUD/CHF', flags:'🇦🇺🇨🇭', base:'Australian Dollar', quote:'Swiss Franc' },
+    { name:'CHF/JPY', flags:'🇨🇭🇯🇵', base:'Swiss Franc', quote:'Japanese Yen' },
+    { name:'GBP/CHF', flags:'🇬🇧🇨🇭', base:'British Pound', quote:'Swiss Franc' },
+    { name:'AUD/CAD', flags:'🇦🇺🇨🇦', base:'Australian Dollar', quote:'Canadian Dollar' },
+    { name:'EUR/CHF', flags:'🇪🇺🇨🇭', base:'Euro', quote:'Swiss Franc' },
+    { name:'CAD/CHF', flags:'🇨🇦🇨🇭', base:'Canadian Dollar', quote:'Swiss Franc' },
+    { name:'CAD/JPY', flags:'🇨🇦🇯🇵', base:'Canadian Dollar', quote:'Japanese Yen' },
   ];
 
   let selectedPair = null;
