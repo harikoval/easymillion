@@ -1306,12 +1306,25 @@
       ? `Downtrend (-DI ${raw.di_minus ?? '?'} vs +DI ${raw.di_plus ?? '?'})`
       : 'Weak / no trend';
 
+    const wrV = votes.williams_r || 'neutral';
+    const wrN = raw.williams_r_value != null ? ` (${raw.williams_r_value})` : '';
+    const wrLbl = wrV === 'bullish' ? 'Oversold' : wrV === 'bearish' ? 'Overbought' : 'Neutral';
+
+    const emaV = votes.ema_cross || 'neutral';
+    const ema9  = raw.ema9  != null ? raw.ema9  : '?';
+    const ema21 = raw.ema21 != null ? raw.ema21 : '?';
+    const emaLbl = emaV === 'bullish' ? `Bullish (EMA9 ${ema9} > EMA21 ${ema21})`
+                 : emaV === 'bearish' ? `Bearish (EMA9 ${ema9} < EMA21 ${ema21})`
+                 : 'Flat';
+
     document.getElementById('analysisIndicators').innerHTML =
       row(`RSI${rsiN} — ${rsiLbl}`, rsiV) +
       row(`MACD — ${macdLbl}`, macdV) +
       row(`Bollinger Bands — ${bbLbl}`, bbV) +
       row(`Stochastic${stochN} — ${stochLbl}`, stochV) +
-      row(`ADX${adxN} — ${adxLbl}`, adxV);
+      row(`ADX${adxN} — ${adxLbl}`, adxV) +
+      row(`Williams %R${wrN} — ${wrLbl}`, wrV) +
+      row(`EMA Cross — ${emaLbl}`, emaV);
   }
 
   function cancelSignal() {
