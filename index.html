@@ -593,12 +593,16 @@
 
   /* ── Full-screen result overlay ── */
   #resultOverlay {
-    display: none; position: fixed; inset: 0; z-index: 100;
+    display: flex; position: fixed; inset: 0; z-index: 100;
     background: rgba(0,0,0,0.78);
     backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
     flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease-out;
+    will-change: opacity;
   }
-  #resultOverlay.show { display: flex; }
+  #resultOverlay.show { opacity: 1; pointer-events: all; }
+  #resultOverlay.hide { opacity: 0; pointer-events: none; transition: opacity 0.25s ease-in; }
   #roParticles {
     position: absolute; inset: 0; overflow: hidden;
     pointer-events: none; z-index: 101;
@@ -607,11 +611,13 @@
     position: relative; z-index: 102;
     display: flex; flex-direction: column; align-items: center;
     text-align: center; padding: 0 32px;
-    animation: roCardIn 0.3s ease-out both;
+    opacity: 0; transform: scale(0.85) translateY(10px);
+    will-change: opacity, transform;
   }
-  @keyframes roCardIn {
-    from { opacity: 0; transform: scale(0.85); }
-    to   { opacity: 1; transform: scale(1); }
+  .ro-card.visible {
+    opacity: 1; transform: none;
+    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s,
+                transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s;
   }
   .ro-label {
     font-size: 12px; font-weight: 700; letter-spacing: 4px;
@@ -1231,7 +1237,8 @@
     showAnalysis(data);
 
     // Reset result overlay to initial state
-    document.getElementById('resultOverlay').classList.remove('show');
+    document.getElementById('resultOverlay').classList.remove('show', 'hide');
+    document.getElementById('roCard').classList.remove('visible');
     document.getElementById('roParticles').innerHTML = '';
     document.getElementById('roChecking').style.display = '';
     document.getElementById('roVerdict').style.display = 'none';
@@ -1280,8 +1287,11 @@
         clearInterval(countdownInterval);
         document.removeEventListener('visibilitychange', onVisible);
         timerText.textContent = '0:00';
-        document.getElementById('resultOverlay').classList.add('show');
         document.getElementById('cancelSignalBtn').style.display = 'none';
+        const _ov = document.getElementById('resultOverlay');
+        const _card = document.getElementById('roCard');
+        _ov.classList.add('show');
+        requestAnimationFrame(() => requestAnimationFrame(() => _card.classList.add('visible')));
         try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
         fetchResult(dir);
       }
@@ -1317,8 +1327,7 @@
           const pricesEl = document.getElementById('roPrices');
           pricesEl.innerHTML = `Entry: ${data.entry}<br>Exit: ${data.exit}`;
           pricesEl.style.display = '';
-          if (isWin) spawnConfetti();
-          else spawnRain();
+          setTimeout(() => { if (isWin) spawnConfetti(); else spawnRain(); }, 150);
           try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred(isWin ? 'success' : 'error'); } catch(e) {}
         }
         document.getElementById('newSignalBtn').style.display = '';
@@ -1331,13 +1340,19 @@
 
   function newSignal() {
     clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.();
-    document.getElementById('resultOverlay').classList.remove('show');
-    document.getElementById('roParticles').innerHTML = '';
-    document.getElementById('s3').classList.add('hidden');
-    document.getElementById('s2').classList.remove('hidden', 'hidden-left');
-    document.getElementById('loadingBar').style.width = '0%';
-    document.getElementById('s2b').classList.add('hidden');
-    collapseAnalysis();
+    const ov = document.getElementById('resultOverlay');
+    ov.classList.remove('show');
+    ov.classList.add('hide');
+    setTimeout(() => {
+      ov.classList.remove('hide');
+      document.getElementById('roCard').classList.remove('visible');
+      document.getElementById('roParticles').innerHTML = '';
+      document.getElementById('s3').classList.add('hidden');
+      document.getElementById('s2').classList.remove('hidden', 'hidden-left');
+      document.getElementById('loadingBar').style.width = '0%';
+      document.getElementById('s2b').classList.add('hidden');
+      collapseAnalysis();
+    }, 270);
   }
 
   function toggleAnalysis() {
