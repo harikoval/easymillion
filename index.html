@@ -1012,13 +1012,21 @@
     try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch(e) {}
 
     document.getElementById('s2').classList.add('hidden-left');
-    document.getElementById('s2b').classList.remove('hidden');
+    const s2bEl = document.getElementById('s2b');
+    s2bEl.style.transition = 'none';
+    s2bEl.classList.remove('hidden', 'hidden-left');
+    void s2bEl.offsetWidth; // flush style so the instant state is painted
+    s2bEl.style.transition = '';
     fetchSignalAndShow();
   }
 
   function retrySignal() {
     document.getElementById('s5').classList.add('hidden-left');
-    document.getElementById('s2b').classList.remove('hidden', 'hidden-left');
+    const s2bEl = document.getElementById('s2b');
+    s2bEl.style.transition = 'none';
+    s2bEl.classList.remove('hidden', 'hidden-left');
+    void s2bEl.offsetWidth;
+    s2bEl.style.transition = '';
     fetchSignalAndShow();
   }
 
