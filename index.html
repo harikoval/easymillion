@@ -857,6 +857,7 @@
 
   let selectedPair = null;
   let countdownInterval = null;
+  let countdownVisibilityCleanup = null;
   let accInterval = null;
 
   function renderPairs(list) {
@@ -889,7 +890,7 @@
   }
 
   function goBack(from, to) {
-    if (from === 's3') { clearInterval(countdownInterval); clearInterval(accInterval); }
+    if (from === 's3') { clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.(); }
     document.getElementById(from).classList.add('hidden');
     const toEl = document.getElementById(to);
     toEl.classList.remove('hidden', 'hidden-left');
@@ -994,7 +995,7 @@
   }
 
   function showResult(data) {
-    clearInterval(countdownInterval); clearInterval(accInterval);
+    clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.();
 
     const dir = (data.signal || '').toUpperCase();
     if (dir !== 'CALL' && dir !== 'PUT') {
@@ -1031,7 +1032,7 @@
   }
 
   function startCountdown(total, dir) {
-    let remaining = total;
+    const startTs = Date.now();
     const circ = 188.5;
     const prog = document.getElementById('timerProg');
     const timerText = document.getElementById('timerText');
@@ -1041,24 +1042,31 @@
     prog.style.filter = `drop-shadow(0 0 4px ${dir === 'CALL' ? 'var(--green)' : 'var(--red)'})`;
 
     function tick() {
-      prog.style.strokeDashoffset = circ * (1 - remaining / total);
-      timerText.textContent = remaining;
+      const remaining = total - Math.floor((Date.now() - startTs) / 1000);
+      prog.style.strokeDashoffset = circ * (1 - Math.max(remaining, 0) / total);
+      timerText.textContent = Math.max(remaining, 0);
       if (remaining <= 10) { prog.style.stroke = 'var(--red)'; timerStatus.textContent = 'Closing Soon!'; }
       if (remaining <= 0) {
         clearInterval(countdownInterval);
+        document.removeEventListener('visibilitychange', onVisible);
         timerText.textContent = '0';
         document.getElementById('timesupOverlay').classList.add('show');
         try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
-        return;
       }
-      remaining--;
     }
+
+    function onVisible() {
+      if (document.visibilityState === 'visible') tick();
+    }
+    document.addEventListener('visibilitychange', onVisible);
+    countdownVisibilityCleanup = () => document.removeEventListener('visibilitychange', onVisible);
+
     tick();
     countdownInterval = setInterval(tick, 1000);
   }
 
   function newSignal() {
-    clearInterval(countdownInterval); clearInterval(accInterval);
+    clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.();
     document.getElementById('s3').classList.add('hidden');
     const s2 = document.getElementById('s2');
     s2.classList.remove('hidden', 'hidden-left');
