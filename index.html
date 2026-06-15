@@ -354,7 +354,31 @@
     background: radial-gradient(ellipse at center, rgba(255,255,255,0.02) 0%, transparent 70%);
   }
   .s2-pair-name { font-size: 26px; font-weight: 700; letter-spacing: 3px; color: var(--text); margin-bottom: 8px; text-align: center; }
-  .s2-pair-sub { font-size: 12px; letter-spacing: 2px; color: var(--muted); margin-bottom: 48px; text-align: center; }
+  .s2-pair-sub { font-size: 12px; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; text-align: center; }
+
+  .expiry-selector {
+    display: flex; gap: 8px;
+    width: calc(100% - 40px); max-width: 260px;
+    margin-bottom: 28px;
+  }
+  .expiry-btn {
+    flex: 1; height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: #888;
+    font-size: 13px; font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .expiry-btn.active {
+    background: rgba(255,255,255,0.1);
+    border-color: #ffffff;
+    color: #ffffff;
+  }
+  .expiry-btn:active { transform: scale(0.95); }
 
   .get-signal-btn {
     position: relative;
@@ -827,6 +851,11 @@
   <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px">
     <div class="s2-pair-name" id="s2PairName"></div>
     <div class="s2-pair-sub">TRADING SIGNALS</div>
+    <div class="expiry-selector">
+      <button class="expiry-btn active" onclick="setExpiry(1,this)">1 MIN</button>
+      <button class="expiry-btn" onclick="setExpiry(3,this)">3 MIN</button>
+      <button class="expiry-btn" onclick="setExpiry(5,this)">5 MIN</button>
+    </div>
     <button class="get-signal-btn" id="getSignalBtn" onclick="startLoading(event)">
       <div class="btn-inner">
         <span class="btn-icon">⚡</span>
@@ -895,7 +924,7 @@
       </div>
       <div class="meta-item">
         <div class="meta-label">Expiry</div>
-        <div class="meta-val">1 MIN</div>
+        <div class="meta-val" id="s3Expiry">1 MIN</div>
       </div>
     </div>
     <div class="conf-row">
@@ -1007,10 +1036,18 @@
   ];
 
   let selectedPair = null;
+  let selectedExpiry = 1;
   let entryPrice = null;
   let countdownInterval = null;
   let countdownVisibilityCleanup = null;
   let accInterval = null;
+
+  function setExpiry(val, btn) {
+    selectedExpiry = val;
+    document.querySelectorAll('.expiry-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    try { window.Telegram?.WebApp?.HapticFeedback?.selectionChanged(); } catch(e) {}
+  }
 
   function renderPairs(list) {
     const el = document.getElementById('pairsList');
@@ -1081,9 +1118,9 @@
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
-    console.log('[DBG] 4a fetch start', Date.now(), 'pair:', selectedPair?.name);
+    console.log('[DBG] 4a fetch start', Date.now(), 'pair:', selectedPair?.name, 'expiry:', selectedExpiry);
     const fetchPromise = fetch(
-      `${API_BASE}/signal?pair=${encodeURIComponent(selectedPair.name)}`,
+      `${API_BASE}/signal?pair=${encodeURIComponent(selectedPair.name)}&expiry=${selectedExpiry}`,
       { signal: controller.signal }
     )
       .then(r => r.json())
@@ -1189,6 +1226,7 @@
     document.getElementById('s3PairName').textContent = selectedPair?.name ?? '';
     document.getElementById('s3PairBadge').textContent = selectedPair?.name ?? '';
     document.getElementById('s3EntryPrice').textContent = entryPrice != null ? entryPrice : '—';
+    document.getElementById('s3Expiry').textContent = selectedExpiry + ' MIN';
     document.getElementById('s3Confidence').textContent = data.accuracy != null ? data.accuracy + '%' : '—';
     showAnalysis(data);
 
@@ -1204,7 +1242,7 @@
     document.getElementById('s2b').classList.add('hidden-left');
     document.getElementById('s3').classList.remove('hidden', 'hidden-left');
 
-    startCountdown(60, dir);
+    startCountdown(selectedExpiry * 60, dir);
   }
 
   function showError(message) {
