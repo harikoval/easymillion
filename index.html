@@ -583,7 +583,7 @@
   .timer-text {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 800; color: var(--text);
+    font-size: 15px; font-weight: 800; color: var(--text);
     font-variant-numeric: tabular-nums;
   }
   .timer-info { flex: 1; }
@@ -950,7 +950,7 @@
         <circle class="timer-track" cx="36" cy="36" r="30"/>
         <circle class="timer-prog" id="timerProg" cx="36" cy="36" r="30"/>
       </svg>
-      <div class="timer-text" id="timerText">60</div>
+      <div class="timer-text" id="timerText">1:00</div>
     </div>
     <div class="timer-info">
       <div class="timer-title">Countdown</div>
@@ -1265,15 +1265,21 @@
     prog.style.stroke = dir === 'BUY' ? 'var(--green)' : 'var(--red)';
     prog.style.filter = `drop-shadow(0 0 4px ${dir === 'BUY' ? 'var(--green)' : 'var(--red)'})`;
 
+    function fmtTime(s) {
+      const m = Math.floor(s / 60);
+      const sec = String(s % 60).padStart(2, '0');
+      return `${m}:${sec}`;
+    }
+
     function tick() {
       const remaining = total - Math.floor((Date.now() - startTs) / 1000);
       prog.style.strokeDashoffset = circ * (1 - Math.max(remaining, 0) / total);
-      timerText.textContent = Math.max(remaining, 0);
+      timerText.textContent = fmtTime(Math.max(remaining, 0));
       if (remaining <= 10) { prog.style.stroke = 'var(--red)'; timerStatus.textContent = 'Closing Soon!'; }
       if (remaining <= 0) {
         clearInterval(countdownInterval);
         document.removeEventListener('visibilitychange', onVisible);
-        timerText.textContent = '0';
+        timerText.textContent = '0:00';
         document.getElementById('resultOverlay').classList.add('show');
         document.getElementById('cancelSignalBtn').style.display = 'none';
         try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
