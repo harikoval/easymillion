@@ -595,6 +595,46 @@
     to { opacity: 1; transform: scale(1); }
   }
 
+  .conf-row {
+    width: 100%; margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    animation: arrowIn 0.5s ease 0.65s both;
+  }
+  .conf-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+  .conf-val { font-size: 20px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  .analysis-wrap {
+    margin: 10px 16px 0; width: calc(100% - 32px);
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+    animation: cardIn 0.5s ease 0.85s both;
+  }
+  .analysis-toggle {
+    width: 100%; background: none; border: none;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 13px 16px; cursor: pointer;
+    color: var(--text); font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
+  }
+  .analysis-toggle:active { background: rgba(255,255,255,0.03); }
+  .analysis-chevron { font-size: 16px; color: var(--muted); transition: transform 0.25s; display: inline-block; }
+  .analysis-chevron.open { transform: rotate(90deg); }
+  .analysis-body { padding: 0 14px 12px; }
+  .analysis-summary {
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--muted); padding-bottom: 9px;
+    border-bottom: 1px solid var(--border); margin-bottom: 6px;
+  }
+  .ind-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.35;
+  }
+  .ind-row:last-child { border-bottom: none; }
+  .ind-vote { font-size: 13px; flex-shrink: 0; margin-left: 10px; }
+
+  #s3 { overflow-y: auto; }
+
   .cancel-signal-btn {
     display: block; margin: 14px auto 0;
     background: transparent;
@@ -825,6 +865,21 @@
         <div class="meta-label">Expiry</div>
         <div class="meta-val">1 MIN</div>
       </div>
+    </div>
+    <div class="conf-row">
+      <div class="conf-label">Signal Confidence</div>
+      <div class="conf-val" id="s3Confidence">—</div>
+    </div>
+  </div>
+
+  <div class="analysis-wrap" id="analysisWrap">
+    <button class="analysis-toggle" onclick="toggleAnalysis()">
+      <span>📊 Analysis Details</span>
+      <span class="analysis-chevron" id="analysisChevron">›</span>
+    </button>
+    <div class="analysis-body" id="analysisBody" style="display:none">
+      <div class="analysis-summary" id="analysisSummary"></div>
+      <div id="analysisIndicators"></div>
     </div>
   </div>
 
@@ -1097,6 +1152,8 @@
     document.getElementById('s3PairName').textContent = selectedPair?.name ?? '';
     document.getElementById('s3PairBadge').textContent = selectedPair?.name ?? '';
     document.getElementById('s3EntryPrice').textContent = entryPrice != null ? entryPrice : '—';
+    document.getElementById('s3Confidence').textContent = data.accuracy != null ? data.accuracy + '%' : '—';
+    showAnalysis(data);
 
     // Reset timesup overlay to initial state
     const overlay = document.getElementById('timesupOverlay');
@@ -1195,9 +1252,70 @@
     document.getElementById('s2').classList.remove('hidden', 'hidden-left');
     document.getElementById('loadingBar').style.width = '0%';
     document.getElementById('s2b').classList.add('hidden');
+    collapseAnalysis();
+  }
+
+  function toggleAnalysis() {
+    const body = document.getElementById('analysisBody');
+    const chevron = document.getElementById('analysisChevron');
+    const open = body.style.display === 'none';
+    body.style.display = open ? 'block' : 'none';
+    chevron.classList.toggle('open', open);
+  }
+
+  function collapseAnalysis() {
+    document.getElementById('analysisBody').style.display = 'none';
+    document.getElementById('analysisChevron').classList.remove('open');
+  }
+
+  function showAnalysis(data) {
+    const votes = data.votes || {};
+    const raw = data.raw || {};
+    const bull = data.bullish_votes ?? 0;
+    const bear = data.bearish_votes ?? 0;
+    const neutral = Object.values(votes).filter(v => v === 'neutral').length;
+    const agreed = Math.max(bull, bear);
+    document.getElementById('analysisSummary').textContent =
+      `${agreed} of ${bull + bear + neutral} indicators agree`;
+
+    const icon = v => v === 'bullish' ? '✅' : v === 'bearish' ? '❌' : '➖';
+    const row = (label, v) =>
+      `<div class="ind-row"><span>${label}</span><span class="ind-vote">${icon(v)}</span></div>`;
+
+    const rsiV = votes.rsi || 'neutral';
+    const rsiN = raw.rsi_value != null ? ` (${raw.rsi_value})` : '';
+    const rsiLbl = rsiV === 'bullish' ? 'Oversold' : rsiV === 'bearish' ? 'Overbought' : 'Neutral';
+
+    const macdV = votes.macd || 'neutral';
+    const macdLbl = raw.macd_status === 'above signal' ? 'Above signal line'
+                  : raw.macd_status === 'below signal' ? 'Below signal line' : 'Neutral';
+
+    const bbV = votes.bbands || 'neutral';
+    const bbLbl = raw.bb_position === 'near lower band' ? 'Near lower band'
+                : raw.bb_position === 'near upper band' ? 'Near upper band' : 'Mid-range';
+
+    const stochV = votes.stoch || 'neutral';
+    const stochN = raw.stoch_k_value != null ? ` (${raw.stoch_k_value})` : '';
+    const stochLbl = stochV === 'bullish' ? 'Oversold' : stochV === 'bearish' ? 'Overbought' : 'Neutral';
+
+    const adxV = votes.adx || 'neutral';
+    const adxN = raw.adx_value != null ? ` (${raw.adx_value})` : '';
+    const adxLbl = adxV === 'bullish'
+      ? `Uptrend (+DI ${raw.di_plus ?? '?'} vs -DI ${raw.di_minus ?? '?'})`
+      : adxV === 'bearish'
+      ? `Downtrend (-DI ${raw.di_minus ?? '?'} vs +DI ${raw.di_plus ?? '?'})`
+      : 'Weak / no trend';
+
+    document.getElementById('analysisIndicators').innerHTML =
+      row(`RSI${rsiN} — ${rsiLbl}`, rsiV) +
+      row(`MACD — ${macdLbl}`, macdV) +
+      row(`Bollinger Bands — ${bbLbl}`, bbV) +
+      row(`Stochastic${stochN} — ${stochLbl}`, stochV) +
+      row(`ADX${adxN} — ${adxLbl}`, adxV);
   }
 
   function cancelSignal() {
+    collapseAnalysis();
     goBack('s3', 's1'); // goBack clears intervals when from==='s3'
   }
 
