@@ -462,7 +462,12 @@
   }
 
   /* ── SCREEN 3 ── */
-  #s3 { justify-content: flex-start; align-items: center; padding-top: env(safe-area-inset-top, 0); }
+  #s3 {
+    justify-content: flex-start; align-items: center;
+    padding-top: env(safe-area-inset-top, 0);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding-bottom: 24px;
+  }
 
   .s3-header {
     padding: 20px 20px 0; width: 100%;
@@ -562,37 +567,80 @@
   .timer-status { font-size: 16px; font-weight: 600; color: var(--text); margin-top: 4px; }
   .timer-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-  .timesup-overlay {
-    position: absolute; inset: 0;
-    background: rgba(8,8,8,0.92);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 10; opacity: 0; pointer-events: none;
-    transition: opacity 0.4s; border-radius: 20px;
+  /* ── Full-screen result overlay ── */
+  #resultOverlay {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.78);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    flex-direction: column; align-items: center; justify-content: center;
   }
-  .timesup-overlay.show { opacity: 1; pointer-events: all; }
-  .timesup-text {
-    font-size: 22px; font-weight: 900; letter-spacing: 4px;
-    color: #ffffff; text-shadow: 0 0 20px rgba(255,255,255,0.4);
-    animation: shake 0.5s ease;
+  #resultOverlay.show { display: flex; }
+  #roParticles {
+    position: absolute; inset: 0; overflow: hidden;
+    pointer-events: none; z-index: 101;
   }
-  @keyframes shake {
-    0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(5px); }
+  .ro-card {
+    position: relative; z-index: 102;
+    display: flex; flex-direction: column; align-items: center;
+    text-align: center; padding: 0 32px;
+    animation: roCardIn 0.3s ease-out both;
+  }
+  @keyframes roCardIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .ro-label {
+    font-size: 12px; font-weight: 700; letter-spacing: 4px;
+    text-transform: uppercase; color: #888; margin-bottom: 20px;
+  }
+  .ro-checking {
+    font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+  }
+  .ro-verdict {
+    font-size: 52px; font-weight: 900; letter-spacing: 2px;
+    animation: roVerdictIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;
+  }
+  .ro-verdict.win  { color: #22c55e; text-shadow: 0 0 30px rgba(34,197,94,0.6), 0 0 60px rgba(34,197,94,0.25); }
+  .ro-verdict.loss { color: #ef4444; text-shadow: 0 0 30px rgba(239,68,68,0.45); }
+  @keyframes roVerdictIn {
+    from { opacity: 0; transform: scale(0.5) translateY(16px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .ro-prices {
+    font-size: 13px; color: rgba(255,255,255,0.4);
+    margin-top: 12px; letter-spacing: 0.5px; line-height: 1.9;
   }
   .new-signal-btn {
-    margin-top: 16px;
+    margin-top: 28px;
     background: transparent;
     border: 1px solid rgba(255,255,255,0.35); border-radius: 50px;
     color: #ffffff; font-size: 13px; font-weight: 800;
-    letter-spacing: 2px; padding: 12px 28px; cursor: pointer;
-    animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s both;
-    box-shadow: 0 0 15px rgba(255,255,255,0.08);
+    letter-spacing: 2px; padding: 14px 32px; cursor: pointer;
+    animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.15s both;
+    box-shadow: 0 0 20px rgba(255,255,255,0.08);
     min-height: 48px;
   }
   .new-signal-btn:active { transform: scale(0.95); }
   @keyframes bounceIn {
     from { opacity: 0; transform: scale(0.5); }
     to { opacity: 1; transform: scale(1); }
+  }
+
+  /* Particle keyframes */
+  @keyframes confettiFall {
+    0%   { transform: translateY(0)    translateX(0)                      rotate(0deg);        opacity: 1; }
+    15%  { transform: translateY(15vh) translateX(var(--sx))              rotate(90deg);       opacity: 1; }
+    40%  { transform: translateY(40vh) translateX(calc(var(--sx)*-0.6))  rotate(200deg);      opacity: 1; }
+    65%  { transform: translateY(65vh) translateX(var(--sx))              rotate(350deg);      opacity: 1; }
+    80%  {                                                                                       opacity: 1; }
+    100% { transform: translateY(110vh) translateX(calc(var(--sx)*-0.3)) rotate(var(--rot));  opacity: 0; }
+  }
+  @keyframes rainFall {
+    0%   { transform: translateY(-120px); opacity: 0; }
+    10%  { opacity: 0.55; }
+    85%  { opacity: 0.45; }
+    100% { transform: translateY(110vh);  opacity: 0; }
   }
 
   .conf-row {
@@ -607,7 +655,7 @@
   .analysis-wrap {
     margin: 10px 16px 0; width: calc(100% - 32px);
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px; overflow: hidden;
+    border-radius: 16px;
     animation: cardIn 0.5s ease 0.85s both;
   }
   .analysis-toggle {
@@ -632,8 +680,6 @@
   }
   .ind-row:last-child { border-bottom: none; }
   .ind-vote { font-size: 13px; flex-shrink: 0; margin-left: 10px; }
-
-  #s3 { overflow-y: auto; }
 
   .cancel-signal-btn {
     display: block; margin: 14px auto 0;
@@ -722,20 +768,6 @@
   .closed-bottom { width: 100%; flex-shrink: 0; margin-bottom: 10px; }
 
   /* ── RESULT OVERLAY ── */
-  .result-checking {
-    font-size: 11px; letter-spacing: 2px; color: rgba(255,255,255,0.35);
-    margin-top: 10px; text-transform: uppercase;
-  }
-  .result-verdict {
-    font-size: 36px; font-weight: 900; letter-spacing: 2px; margin-top: 14px;
-    animation: arrowIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;
-  }
-  .result-verdict.win { color: #22c55e; text-shadow: 0 0 20px rgba(34,197,94,0.5); }
-  .result-verdict.loss { color: #ef4444; text-shadow: 0 0 20px rgba(239,68,68,0.5); }
-  .result-prices {
-    font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 8px;
-    letter-spacing: 1px; text-align: center; line-height: 1.7;
-  }
 
   /* ── SCREEN 5: No Signal ── */
   #s5 {
@@ -896,15 +928,20 @@
       <div class="timer-status" id="timerStatus">Signal Active</div>
       <div class="timer-sub">Monitor your position</div>
     </div>
-    <div class="timesup-overlay" id="timesupOverlay">
-      <div class="timesup-text">TIME'S UP</div>
-      <div class="result-checking" id="resultChecking">Checking result...</div>
-      <div class="result-verdict" id="resultVerdict" style="display:none"></div>
-      <div class="result-prices" id="resultPrices" style="display:none"></div>
-      <button class="new-signal-btn" id="newSignalBtn" onclick="newSignal()" style="display:none">NEW SIGNAL</button>
-    </div>
   </div>
   <button class="cancel-signal-btn" id="cancelSignalBtn" onclick="cancelSignal()">✕ Cancel &amp; Choose Pair</button>
+</div>
+
+<!-- Full-screen result overlay (outside all screens) -->
+<div id="resultOverlay">
+  <div id="roParticles"></div>
+  <div class="ro-card" id="roCard">
+    <div class="ro-label">TIME'S UP</div>
+    <div class="ro-checking" id="roChecking">Checking result…</div>
+    <div class="ro-verdict" id="roVerdict" style="display:none"></div>
+    <div class="ro-prices" id="roPrices" style="display:none"></div>
+    <button class="new-signal-btn" id="newSignalBtn" onclick="newSignal()" style="display:none">NEW SIGNAL</button>
+  </div>
 </div>
 
 <!-- SCREEN 4: Market Closed -->
@@ -1155,12 +1192,12 @@
     document.getElementById('s3Confidence').textContent = data.accuracy != null ? data.accuracy + '%' : '—';
     showAnalysis(data);
 
-    // Reset timesup overlay to initial state
-    const overlay = document.getElementById('timesupOverlay');
-    overlay.classList.remove('show');
-    document.getElementById('resultChecking').style.display = '';
-    document.getElementById('resultVerdict').style.display = 'none';
-    document.getElementById('resultPrices').style.display = 'none';
+    // Reset result overlay to initial state
+    document.getElementById('resultOverlay').classList.remove('show');
+    document.getElementById('roParticles').innerHTML = '';
+    document.getElementById('roChecking').style.display = '';
+    document.getElementById('roVerdict').style.display = 'none';
+    document.getElementById('roPrices').style.display = 'none';
     document.getElementById('newSignalBtn').style.display = 'none';
     document.getElementById('cancelSignalBtn').style.display = '';
 
@@ -1199,7 +1236,7 @@
         clearInterval(countdownInterval);
         document.removeEventListener('visibilitychange', onVisible);
         timerText.textContent = '0';
-        document.getElementById('timesupOverlay').classList.add('show');
+        document.getElementById('resultOverlay').classList.add('show');
         document.getElementById('cancelSignalBtn').style.display = 'none';
         try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
         fetchResult(dir);
@@ -1218,7 +1255,7 @@
 
   function fetchResult(dir) {
     if (!entryPrice || !selectedPair) {
-      document.getElementById('resultChecking').style.display = 'none';
+      document.getElementById('roChecking').style.display = 'none';
       document.getElementById('newSignalBtn').style.display = '';
       return;
     }
@@ -1226,28 +1263,32 @@
     fetch(`${API_BASE}/result?pair=${encodeURIComponent(selectedPair.name)}&entry=${entryPrice}&direction=${direction}`)
       .then(r => r.json())
       .then(data => {
-        document.getElementById('resultChecking').style.display = 'none';
+        document.getElementById('roChecking').style.display = 'none';
         if (data.result) {
           const isWin = data.result === 'WIN';
-          const verdictEl = document.getElementById('resultVerdict');
+          const verdictEl = document.getElementById('roVerdict');
           verdictEl.textContent = isWin ? '✅ WIN' : '❌ LOSS';
-          verdictEl.className = 'result-verdict ' + (isWin ? 'win' : 'loss');
+          verdictEl.className = 'ro-verdict ' + (isWin ? 'win' : 'loss');
           verdictEl.style.display = '';
-          const pricesEl = document.getElementById('resultPrices');
+          const pricesEl = document.getElementById('roPrices');
           pricesEl.innerHTML = `Entry: ${data.entry}<br>Exit: ${data.exit}`;
           pricesEl.style.display = '';
+          if (isWin) spawnConfetti();
+          else spawnRain();
           try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred(isWin ? 'success' : 'error'); } catch(e) {}
         }
         document.getElementById('newSignalBtn').style.display = '';
       })
       .catch(() => {
-        document.getElementById('resultChecking').style.display = 'none';
+        document.getElementById('roChecking').style.display = 'none';
         document.getElementById('newSignalBtn').style.display = '';
       });
   }
 
   function newSignal() {
     clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.();
+    document.getElementById('resultOverlay').classList.remove('show');
+    document.getElementById('roParticles').innerHTML = '';
     document.getElementById('s3').classList.add('hidden');
     document.getElementById('s2').classList.remove('hidden', 'hidden-left');
     document.getElementById('loadingBar').style.width = '0%';
@@ -1325,6 +1366,48 @@
       row(`ADX${adxN} — ${adxLbl}`, adxV) +
       row(`Williams %R${wrN} — ${wrLbl}`, wrV) +
       row(`EMA Cross — ${emaLbl}`, emaV);
+  }
+
+  function spawnConfetti() {
+    const container = document.getElementById('roParticles');
+    const colors = ['#00ff88','#ffd700','#00b4ff','#ff5fa2','#ffffff'];
+    for (let i = 0; i < 28; i++) {
+      const el = document.createElement('div');
+      const size = (6 + Math.random() * 4).toFixed(0);
+      const isCircle = Math.random() > 0.5;
+      const left = (Math.random() * 100).toFixed(1);
+      const sway = ((Math.random() * 120) - 60).toFixed(0);
+      const rot = (360 + Math.floor(Math.random() * 360));
+      const dur = (1.8 + Math.random() * 1.0).toFixed(2);
+      const delay = (Math.random() * 0.4).toFixed(2);
+      el.style.cssText = `position:absolute;top:-20px;left:${left}vw;`
+        + `width:${size}px;height:${size}px;`
+        + `background:${colors[i % colors.length]};`
+        + `border-radius:${isCircle ? '50%' : '2px'};`
+        + `--sx:${sway}px;--rot:${rot}deg;`
+        + `animation:confettiFall ${dur}s ${delay}s ease-in both;`
+        + `will-change:transform,opacity;`;
+      container.appendChild(el);
+    }
+    setTimeout(() => { if (container) container.innerHTML = ''; }, 3000);
+  }
+
+  function spawnRain() {
+    const container = document.getElementById('roParticles');
+    for (let i = 0; i < 18; i++) {
+      const el = document.createElement('div');
+      const h = (60 + Math.floor(Math.random() * 40));
+      const left = (Math.random() * 100).toFixed(1);
+      const dur = (0.8 + Math.random() * 0.6).toFixed(2);
+      const delay = (Math.random() * 0.5).toFixed(2);
+      el.style.cssText = `position:absolute;top:-${h}px;left:${left}vw;`
+        + `width:2px;height:${h}px;`
+        + `background:linear-gradient(to bottom,transparent,rgba(150,150,150,0.5),transparent);`
+        + `animation:rainFall ${dur}s ${delay}s linear both;`
+        + `will-change:transform,opacity;`;
+      container.appendChild(el);
+    }
+    setTimeout(() => { if (container) container.innerHTML = ''; }, 2500);
   }
 
   function cancelSignal() {
