@@ -595,6 +595,18 @@
     to { opacity: 1; transform: scale(1); }
   }
 
+  .cancel-signal-btn {
+    display: block; margin: 14px auto 0;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 50px;
+    color: rgba(255,255,255,0.3);
+    font-size: 12px; font-weight: 600; letter-spacing: 1px;
+    padding: 10px 24px; cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    min-height: 40px;
+  }
+  .cancel-signal-btn:active { opacity: 0.5; transform: scale(0.95); }
+
   .error-toast {
     position: fixed;
     bottom: 40px; left: 50%;
@@ -837,6 +849,7 @@
       <button class="new-signal-btn" id="newSignalBtn" onclick="newSignal()" style="display:none">NEW SIGNAL</button>
     </div>
   </div>
+  <button class="cancel-signal-btn" id="cancelSignalBtn" onclick="cancelSignal()">✕ Cancel &amp; Choose Pair</button>
 </div>
 
 <!-- SCREEN 4: Market Closed -->
@@ -1092,6 +1105,7 @@
     document.getElementById('resultVerdict').style.display = 'none';
     document.getElementById('resultPrices').style.display = 'none';
     document.getElementById('newSignalBtn').style.display = 'none';
+    document.getElementById('cancelSignalBtn').style.display = '';
 
     document.getElementById('s2b').classList.add('hidden-left');
     document.getElementById('s3').classList.remove('hidden', 'hidden-left');
@@ -1129,6 +1143,7 @@
         document.removeEventListener('visibilitychange', onVisible);
         timerText.textContent = '0';
         document.getElementById('timesupOverlay').classList.add('show');
+        document.getElementById('cancelSignalBtn').style.display = 'none';
         try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
         fetchResult(dir);
       }
@@ -1180,6 +1195,10 @@
     document.getElementById('s2').classList.remove('hidden', 'hidden-left');
     document.getElementById('loadingBar').style.width = '0%';
     document.getElementById('s2b').classList.add('hidden');
+  }
+
+  function cancelSignal() {
+    goBack('s3', 's1'); // goBack clears intervals when from==='s3'
   }
 
   function initChart() {
