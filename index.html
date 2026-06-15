@@ -1054,7 +1054,9 @@
   function showResult(data) {
     clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.();
 
-    const dir = (data.signal || '').toUpperCase();
+    let dir = (data.signal || '').toUpperCase();
+    if (dir === 'CALL') dir = 'BUY';
+    if (dir === 'PUT') dir = 'SELL';
     if (dir !== 'BUY' && dir !== 'SELL') {
       showError('Invalid signal received. Please try again.');
       return;
