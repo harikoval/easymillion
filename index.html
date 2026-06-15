@@ -952,10 +952,15 @@
     let phraseIndex = 0;
     const startTime = performance.now();
     let lastPhrase = startTime;
+    let firstFrame = true;
     bar.style.width = '0%';
     textEl.style.transition = 'none'; textEl.style.opacity = '1';
     textEl.textContent = phrases[0];
     function frame(now) {
+      if (firstFrame) {
+        firstFrame = false;
+        console.log('[DBG] 3 first rAF frame', Date.now(), 'elapsed since startTime:', (now - startTime).toFixed(1) + 'ms', 's2b computed opacity:', getComputedStyle(document.getElementById('s2b')).opacity);
+      }
       bar.style.width = (Math.min((now - startTime) / 3000, 1) * 100) + '%';
       if (now - lastPhrase > 750 && phraseIndex < phrases.length - 1) {
         phraseIndex++; lastPhrase = now;
@@ -968,6 +973,7 @@
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
+    console.log('[DBG] 4a fetch start', Date.now(), 'pair:', selectedPair?.name);
     const fetchPromise = fetch(
       `${API_BASE}/signal?pair=${encodeURIComponent(selectedPair.name)}`,
       { signal: controller.signal }
@@ -977,7 +983,7 @@
         if (err.name === 'AbortError') return { market_closed: true, startup: true };
         return { error: 'Signal server unavailable. Please try again.' };
       })
-      .finally(() => clearTimeout(timeoutId));
+      .finally(() => { console.log('[DBG] 4b fetch resolved', Date.now()); clearTimeout(timeoutId); });
 
     Promise.all([
       new Promise(resolve => setTimeout(resolve, 3000)),
@@ -991,6 +997,7 @@
   }
 
   function startLoading(e) {
+    console.log('[DBG] 1 startLoading tap', Date.now(), 's2b classes:', document.getElementById('s2b').className);
     const day = new Date().getDay();
     if (day === 0 || day === 6) {
       document.querySelector('#s4 .closed-moon-emoji').textContent = '🌙';
@@ -1013,6 +1020,7 @@
 
     document.getElementById('s2').classList.add('hidden-left');
     document.getElementById('s2b').classList.remove('hidden', 'hidden-left');
+    console.log('[DBG] 2 s2b shown', Date.now(), 's2b classes after remove:', document.getElementById('s2b').className, 's2b computed opacity:', getComputedStyle(document.getElementById('s2b')).opacity);
     fetchSignalAndShow();
   }
 
@@ -1052,6 +1060,7 @@
   }
 
   function showResult(data) {
+    console.log('[DBG] 5 showResult', Date.now(), 'signal:', data.signal, 's2b classes:', document.getElementById('s2b').className);
     clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.();
 
     let dir = (data.signal || '').toUpperCase();
