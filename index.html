@@ -1052,7 +1052,7 @@
     </div>
     <div class="closed-title">Slow Down</div>
     <div class="closed-message" id="s6Message">
-      You're requesting signals too quickly.<br>Please wait a moment.
+      You're requesting signals too quickly.<br>Please try again in <strong>1 minute</strong>.
     </div>
   </div>
   <div class="closed-bottom">
@@ -1254,7 +1254,10 @@
   }
 
   function showRateLimited(data) {
-    document.getElementById('s6Message').textContent = data.message || "You're requesting signals too quickly. Please wait a moment.";
+    const secs = data.retry_after_seconds;
+    const wait = (secs && secs < 60) ? `${secs} second${secs !== 1 ? 's' : ''}` : '1 minute';
+    document.getElementById('s6Message').innerHTML =
+      `You're requesting signals too quickly.<br>Please try again in <strong>${wait}</strong>.`;
     document.getElementById('s2b').classList.add('hidden-left');
     document.getElementById('s6').classList.remove('hidden', 'hidden-left');
     try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('error'); } catch(e) {}
