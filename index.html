@@ -1,1684 +1,1114 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>EASY MILLION</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#070709">
+<title>EASY MILLION AI BOT</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #080808;
-    --green: #22c55e;
-    --red: #ef4444;
-    --blue: rgba(255,255,255,0.55);
-    --card: rgba(255,255,255,0.03);
-    --border: rgba(255,255,255,0.08);
-    --text: #ffffff;
-    --muted: rgba(255,255,255,0.35);
-  }
+:root{
+  --bg:#070709; --text:#FFFFFF; --mute:#9BA1A6; --dim:#34373C; --ph:#6E747A;
+  --glass:rgba(17,17,21,0.5); --line:rgba(255,255,255,0.1); --line-soft:rgba(255,255,255,0.08);
+  --up:#22E39A; --down:#FF4D61; --amber:#E8B86B;
+  --sig:#22E39A; --sig-glow:rgba(34,227,154,0.5); --sig-soft:rgba(34,227,154,0.16); --sig-border:rgba(34,227,154,0.4);
+  --orb:#FFFFFF;
+  --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans:Inter, -apple-system, 'SF Pro Text', system-ui, sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1); --out:cubic-bezier(.22,1,.36,1);
+  --app-h:var(--tg-viewport-stable-height, 100dvh);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;overscroll-behavior:none}
+button{font-family:inherit;cursor:pointer}
+input::placeholder{color:var(--ph)}
+button:focus-visible,input:focus-visible{outline:2px solid #FFFFFF;outline-offset:2px}
+.mono{font-family:var(--mono)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* ── keyframes (from mockup) ── */
+@keyframes scrIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes scrOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-8px) scale(.99)}}
+@keyframes dotPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.45)}50%{box-shadow:0 0 0 6px rgba(255,255,255,0)}}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinRev{to{transform:rotate(-360deg)}}
+@keyframes aura{0%,100%{box-shadow:0 0 36px rgba(255,255,255,.08),inset 0 0 30px rgba(255,255,255,.03)}50%{box-shadow:0 0 70px rgba(255,255,255,.16),inset 0 0 40px rgba(255,255,255,.06)}}
+@keyframes ring{0%{transform:scale(1);opacity:.4}100%{transform:scale(1.45);opacity:0}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes flicker{0%,100%{opacity:1}45%{opacity:1}50%{opacity:.35}55%{opacity:1}70%{opacity:.7}72%{opacity:1}}
+@keyframes drawer{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+@keyframes orb{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,40px)}}
+@keyframes btnGlow{0%,100%{box-shadow:0 0 18px rgba(255,255,255,.12),0 10px 34px rgba(255,255,255,.06)}50%{box-shadow:0 0 32px rgba(255,255,255,.22),0 10px 50px rgba(255,255,255,.1)}}
+@keyframes corePulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:.4}}
+@keyframes verdictIn{0%{opacity:0;transform:scale(.85)}60%{opacity:1;transform:scale(1.04)}100%{transform:scale(1)}}
 
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    overflow: hidden;
-    position: fixed;
-  }
+.tap{transition:transform .22s var(--spring),background .2s,border-color .2s,opacity .2s}
+.tap:active{transform:scale(.96)}
+.tap:disabled{opacity:.45;cursor:default}
+.tap:disabled:active{transform:none}
+.scroll{scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
 
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background-image:
-      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* ── app shell ── */
+.app{position:relative;width:100%;max-width:480px;height:var(--app-h);margin:0 auto;overflow:hidden;background:var(--bg)}
+.orb{position:absolute;border-radius:50%;filter:blur(100px);transition:background 1s ease;background:var(--orb);pointer-events:none}
+.orb.a{width:340px;height:340px;top:-120px;left:-90px;opacity:.09;animation:orb 14s ease-in-out infinite}
+.orb.b{width:300px;height:300px;bottom:-110px;right:-120px;opacity:.06;animation:orb 18s ease-in-out infinite reverse}
+.grid-bg{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:39px 39px}
+.glass{border:1px solid var(--line);background:var(--glass);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px)}
 
-  .screen {
-    position: fixed; inset: 0;
-    display: flex; flex-direction: column;
-    z-index: 1;
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    overflow: hidden;
-  }
-  .screen.hidden { opacity: 0; pointer-events: none; transform: translateX(60px); }
-  .screen.hidden-left { opacity: 0; pointer-events: none; transform: translateX(-60px); }
+/* ── header ── */
+header{position:absolute;top:0;left:0;right:0;height:68px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;z-index:5}
+.brand{display:flex;align-items:center;gap:7px;white-space:nowrap;min-width:0}
+.brand b{font-weight:800;font-size:14px;letter-spacing:.12em}
+.brand i{font-style:normal;color:var(--dim)}
+.brand em{font-style:normal;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--mute)}
+.navback{display:none;align-items:center;gap:12px;min-width:0}
+.navback span{font-weight:600;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.backbtn{width:40px;height:40px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#FFFFFF;padding:0}
+.app:not([data-screen="hub"]) .brand{display:none}
+.app:not([data-screen="hub"]) .navback{display:flex}
+.pill{display:flex;align-items:center;gap:6px;padding:6px 9px;border-radius:999px;flex-shrink:0;white-space:nowrap}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:#FFFFFF;animation:dotPulse 1.8s ease-in-out infinite}
+.pill span{font-family:var(--mono);font-size:10px;color:var(--mute)}
+.pill .short{display:none}
+.app:not([data-screen="hub"]) .pill .long{display:none}
+.app:not([data-screen="hub"]) .pill .short{display:inline}
 
-  @keyframes flicker {
-    0%,96%,100% { opacity:1; text-shadow:0 0 20px rgba(255,255,255,0.3),0 0 50px rgba(255,255,255,0.1); }
-    97% { opacity:0.85; text-shadow:0 0 8px rgba(255,255,255,0.15); }
-    98% { opacity:1; text-shadow:0 0 20px rgba(255,255,255,0.3),0 0 50px rgba(255,255,255,0.1); }
-    99% { opacity:0.9; text-shadow:none; }
-  }
+/* ── screens ── */
+.screen{position:absolute;top:68px;left:0;right:0;bottom:0;display:none}
+.screen.active{display:flex;animation:scrIn .45s var(--out) both}
+.screen.leaving{display:flex;animation:scrOut .2s ease both;pointer-events:none}
+.pad{overflow-y:auto;overflow-x:hidden;padding:8px 20px calc(28px + env(safe-area-inset-bottom,0px));flex-direction:column}
+.h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-0.02em}
+.sub{margin:0;font-size:13px;color:var(--mute)}
+.label{font-size:12px;color:var(--mute);letter-spacing:.1em}
 
-  /* ── SCREEN 0: HOME ── */
-  .s0-content {
-    position: absolute; inset: 0; z-index: 2;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: flex-start;
-    padding: max(52px, env(safe-area-inset-top, 52px)) 28px 0;
-    pointer-events: none;
-  }
-  .s0-content > * { pointer-events: all; }
-  .s0-brand { text-align: center; }
-  .s0-btn {
-    position: absolute;
-    top: 45%; left: 10%; right: 10%;
-    transform: translateY(-50%);
-    pointer-events: all;
-  }
-  .s0-btn .home-get-btn {
-    height: 48px;
-    font-size: 18px;
-    font-weight: 900;
-    letter-spacing: 2px;
-    border-radius: 14px;
-  }
+/* 1. hub */
+#s-hub{flex-direction:column}
+.ticker{height:40px;flex-shrink:0;border-top:1px solid rgba(255,255,255,0.07);border-bottom:1px solid rgba(255,255,255,0.07);background:var(--glass);overflow:hidden;display:flex;align-items:center}
+.ticker-track{display:flex;width:max-content;animation:marquee 60s linear infinite}
+.tk{display:flex;align-items:center;gap:7px;padding:0 16px;white-space:nowrap;font-family:var(--mono);font-size:12px}
+.tk .l{color:var(--mute)} .tk .p{transition:color .5s} .tk .a{font-size:8px}
+.stage{position:relative;flex:1;overflow:hidden}
+.candles{position:absolute;inset:0}
+.candles .w,.candles .bd{position:absolute;transition:all .6s ease}
+.candles .w{width:1px}
+.candles .bd{width:7px;border-radius:1.5px}
+.candles-fade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(7,7,9,0.2) 0%,rgba(7,7,9,0) 28%,rgba(7,7,9,0.88) 66%,#070709 100%)}
+.live-tag{position:absolute;left:20px;top:18px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--mute)}
+.hero{position:absolute;left:20px;right:20px;bottom:calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:22px}
+.hero h1{margin:0;font-size:32px;line-height:1.1;font-weight:700;letter-spacing:-0.025em}
+.hero p{margin:0;font-size:14px;line-height:1.5;color:var(--mute)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{padding:12px;border-radius:14px}
+.stat b{display:block;font-family:var(--mono);font-size:18px;font-weight:700}
+.stat span{display:block;font-size:11px;color:var(--mute);margin-top:2px}
+.cta{height:62px;border-radius:18px;border:none;background:#FFFFFF;color:var(--bg);font-size:15px;font-weight:800;letter-spacing:.08em;display:flex;align-items:center;justify-content:center;gap:10px;animation:btnGlow 2.8s ease-in-out infinite}
+.cta svg{animation:flicker 2.4s infinite}
 
-  /* Ticker marquee */
-  .s0-ticker {
-    position: absolute;
-    top: calc(45% + 30px);
-    left: 0; right: 0;
-    overflow: hidden;
-    z-index: 2;
-    pointer-events: none;
-    mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
-  }
-  .s0-ticker-inner {
-    display: flex; white-space: nowrap;
-    animation: tickerScroll 22s linear infinite;
-  }
-  .s0-ticker-inner span {
-    font-size: 11px; letter-spacing: 2px;
-    color: rgba(255,255,255,0.45);
-    padding-right: 48px;
-  }
-  @keyframes tickerScroll {
-    from { transform: translateX(0); }
-    to   { transform: translateX(-50%); }
-  }
+/* 2. pairs */
+#s-pairs{gap:16px}
+.search{display:flex;align-items:center;gap:10px;height:50px;flex-shrink:0;padding:0 16px;border-radius:16px;transition:border-color .25s,box-shadow .25s}
+.search:focus-within{border-color:rgba(255,255,255,.4);box-shadow:0 0 0 4px rgba(255,255,255,.06)}
+.search input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#FFFFFF;font-size:16px;font-family:inherit}
+.search input:focus-visible{outline:none}
+.search input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none}
+.plist{display:flex;flex-direction:column;gap:8px}
+.prow{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;border-radius:18px;border:1px solid var(--line-soft);background:var(--glass);color:#FFFFFF;text-align:left}
+@media (hover:hover){.prow:hover{border-color:rgba(255,255,255,.22);background:rgba(255,255,255,.045)}}
+.badge2{position:relative;width:54px;height:36px;flex-shrink:0}
+.badge2 .b1,.badge2 .b2{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700}
+.badge2 .b1{z-index:1;left:0;top:0;width:34px;height:34px;background:#16161B;border:1px solid rgba(255,255,255,0.22);box-shadow:0 0 0 3px #0B0B0E;font-size:12px;color:#FFFFFF}
+.badge2 .b2{left:22px;top:4px;width:32px;height:32px;padding-left:12px;background:#0F0F13;border:1px solid rgba(255,255,255,0.14);font-size:11px;color:var(--mute)}
+.pinfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pinfo b{font-weight:600;font-size:15px}
+.pinfo span{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pright{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.pright .pr{font-family:var(--mono);font-size:14px;transition:color .5s}
+.chip{font-family:var(--mono);font-size:10px;color:var(--mute);padding:2px 7px;border-radius:6px;background:rgba(255,255,255,0.05);border:1px solid var(--line-soft);white-space:nowrap}
+.empty{padding:32px 0;text-align:center;font-size:14px;color:var(--mute)}
 
-  /* Price label */
-  #chartPrice {
-    position: absolute;
-    z-index: 2;
-    right: 10px;
-    font-size: 11px; font-weight: 700;
-    letter-spacing: 1px;
-    color: rgba(255,255,255,0.75);
-    pointer-events: none;
-    font-variant-numeric: tabular-nums;
-    background: rgba(8,8,8,0.75);
-    border: 1px solid rgba(255,255,255,0.1);
-    padding: 2px 6px; border-radius: 4px;
-  }
+/* 3. config */
+#s-config{gap:22px}
+.pcard{position:relative;padding:20px;border-radius:24px;overflow:hidden;flex-shrink:0;
+  background:radial-gradient(240px circle at var(--gx,50%) var(--gy,20%),rgba(255,255,255,0.07),transparent 65%),var(--glass)}
+.pcard .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pcard .who{display:flex;align-items:center;gap:12px;min-width:0}
+.pcard .who b{display:block;font-weight:700;font-size:17px}
+.pcard .who span{display:block;font-size:12px;color:var(--mute)}
+.pcard .badge2 .b1{box-shadow:0 0 0 3px #0E0E11}
+.pcard .bottom{margin-top:20px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.pcard .bigp{font-family:var(--mono);font-size:34px;font-weight:500;letter-spacing:-0.02em;transition:color .5s}
+.pcard .chg{font-family:var(--mono);font-size:13px;padding-bottom:8px}
+.seg{position:relative;display:flex;padding:4px;border-radius:16px;border:1px solid var(--line);background:var(--glass)}
+.seg .thumb{position:absolute;top:4px;bottom:4px;width:calc((100% - 8px) / 3);left:calc(4px + var(--i,0) * ((100% - 8px) / 3));border-radius:12px;background:#FFFFFF;box-shadow:0 0 20px rgba(255,255,255,0.15);transition:left .45s var(--spring)}
+.seg button{position:relative;flex:1;height:46px;border:none;background:transparent;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--mute);transition:color .3s,transform .22s var(--spring)}
+.seg button[aria-pressed="true"]{color:var(--bg)}
+.launch{display:flex;flex-direction:column;align-items:center;gap:18px;padding-top:14px}
+.launch-wrap{position:relative;width:196px;height:196px;display:flex;align-items:center;justify-content:center}
+.launch-wrap .rg{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,255,255,0.35);animation:ring 2.6s ease-out infinite}
+.launch-wrap .rg.d{animation-delay:1.3s}
+.launch-wrap .dash{position:absolute;inset:-8px;border-radius:50%;border:1px dashed rgba(255,255,255,0.14);animation:spin 22s linear infinite}
+.launch-btn{position:relative;width:180px;height:180px;border-radius:50%;border:1px solid rgba(255,255,255,0.22);background:radial-gradient(circle at 50% 30%,#1E1E24 0%,#0B0B0E 72%);color:#FFFFFF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;animation:aura 2.8s ease-in-out infinite}
+.launch-btn svg{filter:drop-shadow(0 0 8px rgba(255,255,255,0.5));animation:flicker 2.4s infinite}
+.launch-btn span{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.06em;line-height:1.4;text-align:center}
 
-  /* Footer tagline */
-  .s0-footer {
-    position: absolute;
-    bottom: max(14px, env(safe-area-inset-bottom, 14px));
-    left: 0; right: 0;
-    text-align: center;
-    font-size: 10px; letter-spacing: 2px;
-    color: var(--muted);
-    z-index: 2; pointer-events: none;
-    text-transform: uppercase;
-  }
+/* 4. scan */
+#s-scan{padding:20px 20px calc(28px + env(safe-area-inset-bottom,0px));flex-direction:column;align-items:center;gap:30px;overflow-y:auto}
+.scan-pill{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid rgba(232,184,107,0.28);background:rgba(232,184,107,0.06)}
+.scan-pill svg{animation:flicker 1.2s infinite}
+.scan-pill span{font-family:var(--mono);font-size:11px;color:var(--amber)}
+.scan-ring{position:relative;width:240px;height:240px;flex-shrink:0}
+.scan-ring svg{position:absolute;inset:0}
+.scan-ring .core{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.scan-ring .pct{font-family:var(--mono);font-size:46px;font-weight:700}
+.dots{display:flex;gap:6px}
+.dots span{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:corePulse 1s ease-in-out infinite}
+.dots span:nth-child(2){animation-delay:.2s} .dots span:nth-child(3){animation-delay:.4s}
+.stages{width:100%;display:flex;flex-direction:column;gap:10px}
+.stg{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid var(--line-soft);background:var(--glass);transition:opacity .4s;opacity:.45}
+.stg.on,.stg.done{opacity:1}
+.stg .ic{width:22px;height:22px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.stg .ic>*{display:none}
+.stg .pend{width:7px;height:7px;border-radius:50%;background:var(--dim)}
+.stg .spin{width:16px;height:16px;border-radius:50%;border:2px solid rgba(232,184,107,0.22);border-top-color:var(--amber);animation:spin .8s linear infinite}
+.stg:not(.on):not(.done) .pend{display:block}
+.stg.on .spin{display:block}
+.stg.done svg{display:block}
+.stg span.t{font-size:13px;line-height:1.4}
+.ghost{height:48px;padding:0 24px;border-radius:14px;border:1px solid rgba(255,255,255,0.12);background:var(--glass);color:var(--mute);font-size:14px;font-weight:600}
+#scanCancel{margin-top:auto;flex-shrink:0}
 
-  /* ── SCREEN 1: PAIR SELECTION ── */
-  #s1 {
-    flex-direction: column;
-    overflow: hidden;
-    padding-top: max(0px, env(safe-area-inset-top, 0px));
-  }
+/* 5. result */
+#s-result{gap:14px}
+.sigcard{position:relative;padding:20px;border-radius:26px;overflow:hidden;flex-shrink:0;border:1px solid var(--sig-border);
+  background:radial-gradient(280px circle at 25% 0%,var(--sig-soft),transparent 70%),var(--glass);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px)}
+.sigcard .top{display:flex;align-items:center;justify-content:space-between}
+.sigcard .tag{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.1em}
+.cd{position:relative;width:60px;height:60px}
+.cd svg{transform:rotate(-90deg)}
+.cd .txt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700}
+.dirrow{display:flex;align-items:center;gap:14px;margin-top:6px}
+.dirrow .big{font-size:46px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--sig);text-shadow:0 0 28px var(--sig-glow)}
+.dirrow .en{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--mute)}
+.arrowbox{margin-left:auto;width:52px;height:52px;border-radius:16px;border:1px solid var(--sig-border);display:flex;align-items:center;justify-content:center}
+.arrowbox .bob{animation:bob 1.8s ease-in-out infinite}
+.dgrid{margin-top:20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cell{padding:12px;border-radius:14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);min-width:0}
+.cell .k{font-size:11px;color:var(--mute)}
+.cell .v{margin-top:4px;font-family:var(--mono);font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell .v small{color:var(--mute);font-weight:400;font-size:12px}
+.cond{display:inline-block;margin-top:1px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,0.03);border:1px solid}
+.gauge{padding:18px 20px 16px;border-radius:22px;display:flex;flex-direction:column;align-items:center;flex-shrink:0}
+.gauge .g{position:relative;width:200px;height:112px}
+.gauge .g .n{position:absolute;left:0;right:0;bottom:4px;text-align:center;font-family:var(--mono);font-size:34px;font-weight:700}
+.acc{border-radius:20px;border:1px solid var(--line);background:var(--glass);overflow:hidden;flex-shrink:0}
+.acc>button{width:100%;height:54px;padding:0 18px;border:none;background:transparent;color:#FFFFFF;display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:600}
+.acc>button svg{transition:transform .35s var(--spring)}
+.acc[data-open="true"]>button svg{transform:rotate(180deg)}
+.acc .body{display:none;padding:2px 18px 18px;flex-direction:column;gap:14px}
+.acc[data-open="true"] .body{display:flex;animation:drawer .4s var(--out) both}
+.ind{display:flex;flex-direction:column;gap:7px}
+.ind .r{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px}
+.ind .r span:first-child{color:var(--mute);flex-shrink:0}
+.ind .r span:last-child{font-family:var(--mono);font-weight:700;font-size:12px;text-align:right}
+.bar{height:3px;border-radius:3px;background:rgba(255,255,255,0.07);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;transition:width .6s var(--out)}
+.btns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:4px;flex-shrink:0}
+.btn-sec{height:54px;border-radius:16px;border:1px solid rgba(255,255,255,0.14);background:var(--glass);color:#FFFFFF;font-size:14px;font-weight:600}
+.btn-pri{height:54px;border-radius:16px;border:none;background:#FFFFFF;color:var(--bg);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+.disc{margin:2px 0 0;text-align:center;font-size:11px;line-height:1.5;color:var(--mute)}
 
-  .home-logo-area { text-align: center; flex-shrink: 0; }
+/* 6. outcome (WIN / LOSS) */
+#s-outcome{gap:14px}
+.outcard{position:relative;padding:22px 20px 20px;border-radius:26px;overflow:hidden;flex-shrink:0;border:1px solid var(--line);
+  background:var(--glass);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);transition:border-color .5s}
+.outcard.win,.outcard.loss{border-color:var(--sig-border);background:radial-gradient(300px circle at 50% 0%,var(--sig-soft),transparent 70%),var(--glass)}
+.outcard .tag{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.1em;text-align:center}
+.checking{display:flex;flex-direction:column;align-items:center;gap:14px;padding:30px 0 16px}
+.checking .spin{width:34px;height:34px;border-radius:50%;border:2.5px solid rgba(232,184,107,0.22);border-top-color:var(--amber);animation:spin .8s linear infinite}
+.checking span{font-size:14px;color:var(--mute)}
+.verdict{display:none;flex-direction:column;align-items:center;gap:6px;padding:18px 0 4px}
+.outcard.win .verdict,.outcard.loss .verdict,.outcard.unknown .verdict{display:flex}
+.outcard.win .checking,.outcard.loss .checking,.outcard.unknown .checking{display:none}
+.verdict .big{font-size:44px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--sig);text-shadow:0 0 30px var(--sig-glow);animation:verdictIn .6s var(--spring) both}
+.outcard.unknown .verdict .big{font-size:22px;color:#FFFFFF;text-shadow:none;letter-spacing:-0.01em;text-align:center}
+.verdict .en{font-family:var(--mono);font-size:12px;letter-spacing:.2em;color:var(--mute)}
+.outcard .dgrid{display:none}
+.outcard.win .dgrid,.outcard.loss .dgrid,.outcard.unknown .dgrid{display:grid}
 
-  .home-logo {
-    font-size: clamp(28px, 8vw, 42px);
-    font-weight: 900;
-    letter-spacing: 8px;
-    text-transform: uppercase;
-    color: #ffffff;
-    text-shadow: 0 0 20px rgba(255,255,255,0.3), 0 0 60px rgba(255,255,255,0.1);
-    animation: flicker 4s infinite;
-  }
+/* 7. state cards */
+#s-state{gap:18px;justify-content:center}
+.statecard{padding:28px 22px 22px;border-radius:26px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;flex-shrink:0}
+.st-icon{position:relative;width:76px;height:76px;display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.st-icon .rg{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,255,255,0.3);animation:ring 2.6s ease-out infinite}
+.st-icon .rg.d{animation-delay:1.3s}
+.st-icon .core{width:60px;height:60px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);background:radial-gradient(circle at 50% 30%,#1E1E24 0%,#0B0B0E 72%);display:flex;align-items:center;justify-content:center}
+.statecard h3{margin:0;font-size:22px;font-weight:700;letter-spacing:-0.02em}
+.statecard p{margin:0;font-size:14px;line-height:1.55;color:var(--mute)}
+.statecard p b{color:#FFFFFF;font-weight:600}
+.statecard .detail{font-family:var(--mono);font-size:10px;color:var(--ph);word-break:break-word}
+.state-btns{display:flex;flex-direction:column;gap:10px;flex-shrink:0}
+.state-btns button{width:100%}
 
-  .home-subtitle {
-    font-size: 11px;
-    letter-spacing: 3px;
-    color: rgba(255,255,255,0.45);
-    margin-top: 8px;
-    text-transform: uppercase;
-  }
-
-  /* Decorative ring */
-  .deco-wrap {
-    position: relative;
-    width: 170px; height: 170px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-
-  .deco-ring {
-    position: absolute;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.12);
-  }
-  .deco-ring-1 { width: 160px; height: 160px; top: 5px; left: 5px; animation: ringPulse 2.2s ease-in-out infinite; }
-  .deco-ring-2 { width: 130px; height: 130px; top: 20px; left: 20px; border-color: rgba(255,255,255,0.06); animation: ringPulse 2.2s ease-in-out infinite 0.5s; }
-
-  @keyframes ringPulse {
-    0%,100% { transform: scale(1); opacity: 0.4; }
-    50% { transform: scale(1.05); opacity: 1; }
-  }
-
-  .deco-arc {
-    position: absolute;
-  }
-  .deco-arc-outer {
-    width: 160px; height: 160px; top: 5px; left: 5px;
-    animation: spinArc 5s linear infinite;
-  }
-  .deco-arc-inner {
-    width: 120px; height: 120px; top: 25px; left: 25px;
-    animation: spinArc 3.5s linear infinite reverse;
-  }
-
-  @keyframes spinArc { to { transform: rotate(360deg); } }
-
-  .deco-center-dot {
-    position: relative; z-index: 2;
-    width: 18px; height: 18px;
-    border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.2);
-    animation: centerPulse 1.6s ease-in-out infinite;
-  }
-
-  @keyframes centerPulse {
-    0%,100% { transform: scale(1); box-shadow: 0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.2); }
-    50% { transform: scale(1.35); box-shadow: 0 0 30px rgba(255,255,255,0.7), 0 0 60px rgba(255,255,255,0.3); }
-  }
-
-  /* Home button */
-  .home-btn-area { width: 100%; flex-shrink: 0; margin-bottom: 30px; }
-
-  .home-get-btn {
-    width: 100%; height: 62px;
-    border-radius: 20px;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.35);
-    cursor: pointer;
-    font-size: 16px; font-weight: 900;
-    letter-spacing: 4px; color: #ffffff;
-    text-transform: uppercase;
-    position: relative; overflow: hidden;
-    animation: homeBtnPulse 2.5s ease-in-out infinite;
-  }
-  .home-get-btn::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: rgba(255,255,255,0);
-    transition: background 0.2s;
-  }
-  @keyframes homeBtnPulse {
-    0%,100% { box-shadow: 0 0 15px rgba(255,255,255,0.08), 0 0 30px rgba(255,255,255,0.04); transform: scale(1); }
-    50% { box-shadow: 0 0 25px rgba(255,255,255,0.18), 0 0 50px rgba(255,255,255,0.08); transform: scale(1.015); }
-  }
-  .home-get-btn:active { transform: scale(0.96) !important; animation: none; background: rgba(255,255,255,0.08); box-shadow: none; }
-
-  /* ── BOTTOM SHEET ── */
-  #sheetOverlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0);
-    z-index: 50;
-    pointer-events: none;
-    transition: background 0.35s ease;
-  }
-  #sheetOverlay.open { background: rgba(0,0,0,0.75); pointer-events: all; }
-
-  #bottomSheet {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    background: #0f0f0f;
-    border-radius: 28px 28px 0 0;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    max-height: 82vh;
-    display: flex; flex-direction: column;
-    transform: translateY(100%);
-    transition: transform 0.42s cubic-bezier(0.32, 0.72, 0, 1);
-    box-shadow: 0 -20px 60px rgba(0,0,0,0.6);
-    will-change: transform;
-  }
-  #sheetOverlay.open #bottomSheet { transform: translateY(0); }
-
-  .sheet-handle {
-    width: 40px; height: 4px;
-    background: rgba(255,255,255,0.18);
-    border-radius: 2px;
-    margin: 14px auto 0;
-    flex-shrink: 0;
-    cursor: grab;
-  }
-
-  .sheet-label {
-    font-size: 10px; letter-spacing: 3px;
-    color: var(--muted);
-    text-align: center;
-    padding: 10px 20px 14px;
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-
-  .sheet-search-wrap {
-    padding: 0 16px 10px;
-    position: relative;
-    flex-shrink: 0;
-  }
-
-  .sheet-pairs {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 16px;
-    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-    -webkit-overflow-scrolling: touch;
-  }
-  .sheet-pairs::-webkit-scrollbar { display: none; }
-
-  /* Search + Pairs (shared) */
-  .search-input {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 11px 16px 11px 42px;
-    color: var(--text);
-    font-size: 14px; outline: none;
-    backdrop-filter: blur(10px);
-    transition: border-color 0.3s, box-shadow 0.3s;
-    -webkit-appearance: none;
-  }
-  .search-input::placeholder { color: var(--muted); }
-  .search-input:focus {
-    border-color: rgba(255,255,255,0.3);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 0 20px rgba(255,255,255,0.04);
-  }
-  .search-icon {
-    position: absolute;
-    left: 28px; top: 50%;
-    transform: translateY(-50%);
-    width: 16px; height: 16px;
-    opacity: 0.4;
-    pointer-events: none;
-  }
-
-  .pair-row {
-    display: flex; align-items: center;
-    padding: 14px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    backdrop-filter: blur(10px);
-    transition: all 0.2s ease;
-    position: relative; overflow: hidden;
-    min-height: 56px;
-  }
-  .pair-row::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 70%);
-    opacity: 0; transition: opacity 0.3s;
-  }
-  .pair-row:active { transform: scale(0.97); border-color: rgba(255,255,255,0.25); }
-  .pair-row:active::after { opacity: 1; }
-
-  .pair-flags { font-size: 20px; margin-right: 12px; line-height: 1; flex-shrink: 0; }
-  .pair-info { flex: 1; min-width: 0; }
-  .pair-name { font-size: 15px; font-weight: 600; letter-spacing: 1px; color: var(--text); }
-  .pair-label { font-size: 11px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chevron { opacity: 0.25; margin-left: 8px; font-size: 14px; flex-shrink: 0; }
-
-  /* ── SCREEN 2 ── */
-  #s2 {
-    justify-content: center; align-items: center;
-    background: radial-gradient(ellipse at center, rgba(255,255,255,0.02) 0%, transparent 70%);
-  }
-  .s2-pair-name { font-size: 26px; font-weight: 700; letter-spacing: 3px; color: var(--text); margin-bottom: 8px; text-align: center; }
-  .s2-pair-sub { font-size: 12px; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; text-align: center; }
-
-  .expiry-selector {
-    display: flex; gap: 8px;
-    width: calc(100% - 40px); max-width: 260px;
-    margin-bottom: 28px;
-  }
-  .expiry-btn {
-    flex: 1; height: 40px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.15);
-    background: transparent;
-    color: #888;
-    font-size: 13px; font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-  }
-  .expiry-btn.active {
-    background: rgba(255,255,255,0.1);
-    border-color: #ffffff;
-    color: #ffffff;
-  }
-  .expiry-btn:active { transform: scale(0.95); }
-
-  .get-signal-btn {
-    position: relative;
-    width: 160px; height: 160px;
-    border-radius: 50%;
-    background: conic-gradient(from 0deg, rgba(255,255,255,0.9), rgba(255,255,255,0.3), rgba(255,255,255,0.9));
-    border: none; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    outline: none;
-    animation: btnPulse 2.5s ease-in-out infinite;
-  }
-  .get-signal-btn::before {
-    content: ''; position: absolute; inset: 3px;
-    border-radius: 50%; background: var(--bg);
-  }
-  .get-signal-btn::after {
-    content: ''; position: absolute; inset: -12px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%);
-    animation: btnPulse 2.5s ease-in-out infinite;
-    filter: blur(8px);
-  }
-  .btn-inner { position: relative; z-index: 1; text-align: center; }
-  .btn-icon { font-size: 28px; display: block; margin-bottom: 4px; }
-  .btn-text {
-    font-size: 11px; font-weight: 700; letter-spacing: 2px;
-    color: rgba(255,255,255,0.9);
-    background: none; -webkit-background-clip: unset; -webkit-text-fill-color: unset;
-  }
-  @keyframes btnPulse {
-    0%,100% { transform: scale(1); box-shadow: 0 0 20px rgba(255,255,255,0.12); }
-    50% { transform: scale(1.04); box-shadow: 0 0 35px rgba(255,255,255,0.22), 0 0 70px rgba(255,255,255,0.08); }
-  }
-  .get-signal-btn:active { transform: scale(0.94) !important; animation: none; }
-
-  .ripple {
-    position: absolute; border-radius: 50%;
-    background: rgba(255,255,255,0.15);
-    animation: rippleAnim 0.6s ease-out forwards;
-    pointer-events: none;
-  }
-  @keyframes rippleAnim {
-    0% { transform: scale(0); opacity: 1; }
-    100% { transform: scale(4); opacity: 0; }
-  }
-
-  .back-btn {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--muted);
-    padding: 10px 16px;
-    font-size: 13px; cursor: pointer;
-    transition: all 0.2s;
-    min-height: 44px;
-  }
-  .back-btn:active { opacity: 0.7; transform: scale(0.95); }
-
-  /* ── SCREEN 2B: Loading ── */
-  #s2b { justify-content: center; align-items: center; transition: none; }
-
-  .loading-ring-wrap { position: relative; width: 140px; height: 140px; margin-bottom: 48px; }
-  .loading-ring { width: 140px; height: 140px; border-radius: 50%; position: relative; }
-  .loading-ring svg { position: absolute; inset: 0; animation: rotateSvg 1.2s linear infinite; }
-  @keyframes rotateSvg { to { transform: rotate(360deg); } }
-  .ring-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 3; }
-  .ring-progress {
-    fill: none; stroke: rgba(255,255,255,0.9); stroke-width: 3;
-    stroke-linecap: round; stroke-dasharray: 360; stroke-dashoffset: 90;
-    filter: drop-shadow(0 0 6px rgba(255,255,255,0.4));
-  }
-  .ring-inner {
-    position: absolute; inset: 20px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .ring-dots { display: flex; gap: 5px; }
-  .ring-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: rgba(255,255,255,0.9);
-    animation: dotBounce 1.2s ease-in-out infinite;
-    box-shadow: 0 0 8px rgba(255,255,255,0.5);
-  }
-  .ring-dot:nth-child(2) { animation-delay: 0.2s; background: rgba(255,255,255,0.55); box-shadow: 0 0 8px rgba(255,255,255,0.25); }
-  .ring-dot:nth-child(3) { animation-delay: 0.4s; }
-  @keyframes dotBounce {
-    0%,100% { transform: translateY(0); opacity: 0.5; }
-    50% { transform: translateY(-8px); opacity: 1; }
-  }
-  .loading-text {
-    font-size: 15px; font-weight: 500; letter-spacing: 1px;
-    color: rgba(255,255,255,0.65); text-align: center; min-height: 24px;
-  }
-  .loading-bar-wrap {
-    width: 200px; height: 2px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 2px; margin-top: 20px; overflow: hidden;
-  }
-  .loading-bar {
-    height: 100%;
-    background: rgba(255,255,255,0.9);
-    border-radius: 2px; width: 0%;
-    box-shadow: 0 0 8px rgba(255,255,255,0.4);
-    transition: width 0.1s linear;
-  }
-
-  /* ── SCREEN 3 ── */
-  #s3 {
-    justify-content: flex-start; align-items: center;
-    padding-top: env(safe-area-inset-top, 0);
-    overflow-y: auto; -webkit-overflow-scrolling: touch;
-    padding-bottom: 24px;
-  }
-
-  .s3-header {
-    padding: 20px 20px 0; width: 100%;
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .s3-pair-badge {
-    font-size: 14px; font-weight: 700; letter-spacing: 2px;
-    color: var(--text);
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 10px 14px;
-  }
-
-  .signal-card {
-    margin: 20px 16px 0; width: calc(100% - 32px);
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 24px; padding: 28px 20px;
-    backdrop-filter: blur(20px);
-    display: flex; flex-direction: column; align-items: center;
-    position: relative; overflow: hidden;
-    animation: cardIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  }
-  @keyframes cardIn {
-    from { opacity: 0; transform: translateY(30px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  .signal-glow {
-    position: absolute; inset: 0; border-radius: 24px;
-    pointer-events: none; animation: signalGlow 2s ease-in-out infinite;
-  }
-  .signal-glow.buy { background: radial-gradient(ellipse at center, rgba(34,197,94,0.08) 0%, transparent 70%); border: 1px solid rgba(34,197,94,0.2); }
-  .signal-glow.sell { background: radial-gradient(ellipse at center, rgba(239,68,68,0.08) 0%, transparent 70%); border: 1px solid rgba(239,68,68,0.2); }
-  @keyframes signalGlow { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
-
-  .signal-arrow {
-    font-size: 72px; line-height: 1;
-    animation: arrowIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
-    filter: drop-shadow(0 0 20px currentColor);
-  }
-  .signal-arrow.buy { color: #22c55e; }
-  .signal-arrow.sell { color: #ef4444; }
-
-  @keyframes arrowIn {
-    from { opacity: 0; transform: scale(0.3) translateY(20px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .signal-direction {
-    font-size: 36px; font-weight: 900; letter-spacing: 6px; margin-top: 8px;
-    animation: arrowIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.35s both;
-  }
-  .signal-direction.buy { color: #22c55e; text-shadow: 0 0 20px rgba(34,197,94,0.5), 0 0 40px rgba(34,197,94,0.2); }
-  .signal-direction.sell { color: #ef4444; text-shadow: 0 0 20px rgba(239,68,68,0.5), 0 0 40px rgba(239,68,68,0.2); }
-
-  .signal-meta { display: flex; gap: 32px; margin-top: 20px; animation: arrowIn 0.5s ease 0.5s both; }
-  .meta-item { text-align: center; }
-  .meta-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
-  .meta-val { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 3px; }
-
-  .accuracy-row {
-    width: 100%; margin-top: 20px; padding-top: 20px;
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    animation: arrowIn 0.5s ease 0.65s both;
-  }
-  .acc-label { font-size: 12px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
-  .acc-val {
-    font-size: 28px; font-weight: 800; color: #ffffff;
-    text-shadow: 0 0 15px rgba(255,255,255,0.25);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .countdown-wrap {
-    margin: 16px 16px 0; width: calc(100% - 32px);
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 20px; padding: 20px;
-    backdrop-filter: blur(20px);
-    display: flex; align-items: center; gap: 20px;
-    animation: cardIn 0.5s ease 0.8s both;
-  }
-  .timer-svg-wrap { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
-  .timer-svg { transform: rotate(-90deg); }
-  .timer-track { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 4; }
-  .timer-prog {
-    fill: none; stroke: #ffffff; stroke-width: 4;
-    stroke-linecap: round; stroke-dasharray: 188.5; stroke-dashoffset: 0;
-    transition: stroke-dashoffset 1s linear, stroke 0.5s;
-    filter: drop-shadow(0 0 4px rgba(255,255,255,0.3));
-  }
-  .timer-text {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 800; color: var(--text);
-    font-variant-numeric: tabular-nums;
-  }
-  .timer-info { flex: 1; }
-  .timer-title { font-size: 11px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
-  .timer-status { font-size: 16px; font-weight: 600; color: var(--text); margin-top: 4px; }
-  .timer-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-
-  /* ── Full-screen result overlay ── */
-  #resultOverlay {
-    display: flex; position: fixed; inset: 0; z-index: 100;
-    background: rgba(0,0,0,0.78);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    flex-direction: column; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.35s ease-out;
-    will-change: opacity;
-  }
-  #resultOverlay.show { opacity: 1; pointer-events: all; }
-  #resultOverlay.hide { opacity: 0; pointer-events: none; transition: opacity 0.25s ease-in; }
-  #roParticles {
-    position: absolute; inset: 0; overflow: hidden;
-    pointer-events: none; z-index: 101;
-  }
-  .ro-card {
-    position: relative; z-index: 102;
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center; padding: 0 32px;
-    opacity: 0; transform: scale(0.85) translateY(10px);
-    will-change: opacity, transform;
-  }
-  .ro-card.visible {
-    opacity: 1; transform: none;
-    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s,
-                transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.08s;
-  }
-  .ro-label {
-    font-size: 12px; font-weight: 700; letter-spacing: 4px;
-    text-transform: uppercase; color: #888; margin-bottom: 20px;
-  }
-  .ro-checking {
-    font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: rgba(255,255,255,0.35);
-  }
-  .ro-verdict {
-    font-size: 52px; font-weight: 900; letter-spacing: 2px;
-    animation: roVerdictIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275) both;
-  }
-  .ro-verdict.win  { color: #22c55e; text-shadow: 0 0 30px rgba(34,197,94,0.6), 0 0 60px rgba(34,197,94,0.25); }
-  .ro-verdict.loss { color: #ef4444; text-shadow: 0 0 30px rgba(239,68,68,0.45); }
-  @keyframes roVerdictIn {
-    from { opacity: 0; transform: scale(0.5) translateY(16px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); }
-  }
-  .ro-prices {
-    font-size: 13px; color: rgba(255,255,255,0.4);
-    margin-top: 12px; letter-spacing: 0.5px; line-height: 1.9;
-  }
-  .new-signal-btn {
-    margin-top: 28px;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.35); border-radius: 50px;
-    color: #ffffff; font-size: 13px; font-weight: 800;
-    letter-spacing: 2px; padding: 14px 32px; cursor: pointer;
-    animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.15s both;
-    box-shadow: 0 0 20px rgba(255,255,255,0.08);
-    min-height: 48px;
-  }
-  .new-signal-btn:active { transform: scale(0.95); }
-  @keyframes bounceIn {
-    from { opacity: 0; transform: scale(0.5); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  /* Particle keyframes */
-  @keyframes confettiFall {
-    0%   { transform: translateY(0)    translateX(0)                      rotate(0deg);        opacity: 1; }
-    15%  { transform: translateY(15vh) translateX(var(--sx))              rotate(90deg);       opacity: 1; }
-    40%  { transform: translateY(40vh) translateX(calc(var(--sx)*-0.6))  rotate(200deg);      opacity: 1; }
-    65%  { transform: translateY(65vh) translateX(var(--sx))              rotate(350deg);      opacity: 1; }
-    80%  {                                                                                       opacity: 1; }
-    100% { transform: translateY(110vh) translateX(calc(var(--sx)*-0.3)) rotate(var(--rot));  opacity: 0; }
-  }
-  @keyframes rainFall {
-    0%   { transform: translateY(-120px); opacity: 0; }
-    10%  { opacity: 0.55; }
-    85%  { opacity: 0.45; }
-    100% { transform: translateY(110vh);  opacity: 0; }
-  }
-
-  .volatility-row {
-    width: 100%; margin-top: 14px; padding-top: 14px;
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; gap: 8px;
-    animation: arrowIn 0.5s ease 0.57s both;
-  }
-  .vol-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    flex-shrink: 0;
-    animation: pulse-dot 2s ease-in-out infinite;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
-    50%       { opacity: 0.6; box-shadow: 0 0 6px 2px currentColor; }
-  }
-  .vol-label { font-size: 11px; color: var(--muted); letter-spacing: 0.2px; line-height: 1.3; }
-
-  .conf-row {
-    width: 100%; margin-top: 14px; padding-top: 14px;
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    animation: arrowIn 0.5s ease 0.65s both;
-  }
-  .conf-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
-  .conf-val { font-size: 20px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
-
-  .analysis-wrap {
-    margin: 10px 16px 0; width: calc(100% - 32px);
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px;
-    animation: cardIn 0.5s ease 0.85s both;
-  }
-  .analysis-toggle {
-    width: 100%; background: none; border: none;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 13px 16px; cursor: pointer;
-    color: var(--text); font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
-  }
-  .analysis-toggle:active { background: rgba(255,255,255,0.03); }
-  .analysis-chevron { font-size: 16px; color: var(--muted); transition: transform 0.3s ease; display: inline-block; }
-  .analysis-chevron.open { transform: rotate(90deg); }
-  .analysis-body {
-    padding: 0 14px 12px;
-    overflow: hidden;
-    transition: max-height 0.35s ease, opacity 0.25s ease;
-  }
-  .analysis-summary {
-    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase;
-    color: var(--muted); padding-bottom: 9px;
-    border-bottom: 1px solid var(--border); margin-bottom: 6px;
-  }
-  .ind-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
-    font-size: 12px; color: rgba(255,255,255,0.6); line-height: 1.35;
-  }
-  .ind-row:last-child { border-bottom: none; }
-  .ind-vote { font-size: 13px; flex-shrink: 0; margin-left: 10px; }
-
-  .cancel-signal-btn {
-    display: block; margin: 14px auto 0;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 50px;
-    color: rgba(255,255,255,0.3);
-    font-size: 12px; font-weight: 600; letter-spacing: 1px;
-    padding: 10px 24px; cursor: pointer;
-    transition: opacity 0.2s, transform 0.15s;
-    min-height: 40px;
-  }
-  .cancel-signal-btn:active { opacity: 0.5; transform: scale(0.95); }
-
-  .error-toast {
-    position: fixed;
-    bottom: 40px; left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 14px;
-    padding: 14px 20px;
-    font-size: 13px; color: rgba(255,255,255,0.8);
-    text-align: center;
-    max-width: calc(100% - 48px);
-    backdrop-filter: blur(10px);
-    z-index: 200;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.3s, transform 0.3s;
-  }
-  .error-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: all; }
-
-  /* ── SCREEN 4: Market Closed ── */
-  #s4 {
-    align-items: center;
-    justify-content: space-between;
-    padding: max(20px, env(safe-area-inset-top, 20px)) 32px max(20px, env(safe-area-inset-bottom, 20px));
-  }
-
-  .closed-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-
-  .closed-moon-wrap {
-    position: relative;
-    width: 140px; height: 140px;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 36px;
-  }
-  .closed-ring {
-    position: absolute; border-radius: 50%;
-    border: 1px solid rgba(255,255,255,0.12);
-  }
-  .closed-ring-1 { width: 138px; height: 138px; top: 1px; left: 1px; animation: closedRing 3s ease-in-out infinite; }
-  .closed-ring-2 { width: 108px; height: 108px; top: 16px; left: 16px; border-color: rgba(255,255,255,0.05); animation: closedRing 3s ease-in-out infinite 0.8s; }
-  @keyframes closedRing {
-    0%,100% { transform: scale(1); opacity: 0.4; }
-    50% { transform: scale(1.06); opacity: 1; }
-  }
-  .closed-moon-emoji {
-    font-size: 62px; line-height: 1;
-    position: relative; z-index: 2;
-    animation: moonFloat 4s ease-in-out infinite;
-    filter: drop-shadow(0 0 18px rgba(255,255,255,0.25)) drop-shadow(0 0 40px rgba(255,255,255,0.1));
-  }
-  @keyframes moonFloat {
-    0%,100% { transform: translateY(0) rotate(-5deg); }
-    50% { transform: translateY(-10px) rotate(5deg); }
-  }
-
-  .closed-title {
-    font-size: clamp(22px, 6vw, 30px);
-    font-weight: 900;
-    letter-spacing: clamp(3px, 1.5vw, 6px);
-    text-transform: uppercase;
-    color: #ffffff;
-    text-shadow: 0 0 20px rgba(255,255,255,0.3);
-    margin-bottom: 18px;
-  }
-
-  .closed-message {
-    font-size: 15px;
-    color: var(--muted);
-    line-height: 1.65;
-    max-width: 300px;
-  }
-  .closed-message strong { color: var(--text); font-weight: 600; }
-
-  .closed-bottom { width: 100%; flex-shrink: 0; margin-bottom: 10px; }
-
-  /* ── RESULT OVERLAY ── */
-
-  /* ── SCREEN 5: No Signal ── */
-  #s5 {
-    align-items: center; justify-content: space-between;
-    padding: max(20px, env(safe-area-inset-top, 20px)) 32px max(20px, env(safe-area-inset-bottom, 20px));
-  }
-  .nosig-icon { font-size: 56px; margin-bottom: 20px; opacity: 0.7; }
-
-  /* ── SCREEN 6: Rate Limited ── */
-  #s6 {
-    align-items: center; justify-content: space-between;
-    padding: max(20px, env(safe-area-inset-top, 20px)) 32px max(20px, env(safe-area-inset-bottom, 20px));
-  }
+/* small phones */
+@media (max-width:379px){ .brand i,.brand em{display:none} }
+@media (max-width:339px){ .app[data-screen="hub"] .pill .long{display:none} .app[data-screen="hub"] .pill .short{display:inline} }
+@media (max-width:360px){
+  .hero h1{font-size:28px}
+  .dirrow .big{font-size:40px}
+  .pcard .bigp{font-size:30px}
+  .stat{padding:10px}
+  .stat b{font-size:16px}
+}
+@media (max-height:700px){
+  .hero{gap:16px}
+  .hero h1{font-size:28px}
+  .launch-wrap{width:170px;height:170px}
+  .launch-btn{width:156px;height:156px}
+  .scan-ring{transform:scale(.85);margin:-18px 0}
+  #s-scan{gap:22px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
 </style>
 </head>
 <body>
+<div class="app" id="app" data-screen="hub">
+  <div class="orb a" aria-hidden="true"></div>
+  <div class="orb b" aria-hidden="true"></div>
+  <div class="grid-bg" aria-hidden="true"></div>
 
-<!-- SCREEN 0: Home -->
-<div class="screen" id="s0">
-  <canvas id="chartCanvas" style="position:absolute;inset:0;pointer-events:none;z-index:0"></canvas>
-  <div style="position:absolute;top:0;left:0;right:0;height:74%;background:linear-gradient(to bottom,var(--bg) 65%,transparent);pointer-events:none;z-index:1"></div>
-  <div style="position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,var(--bg) 60%);pointer-events:none;z-index:1"></div>
-  <!-- Ticker -->
-  <div class="s0-ticker">
-    <div class="s0-ticker-inner">
-      <span>EUR/USD • GBP/USD • USD/CHF • USD/CAD • EUR/GBP • AUD/USD • EUR/JPY • GBP/JPY • AUD/JPY • EUR/AUD • EUR/CAD • GBP/AUD • GBP/CAD • AUD/CHF • CHF/JPY • GBP/CHF • AUD/CAD • EUR/CHF • CAD/CHF • CAD/JPY •&nbsp;</span>
-      <span>EUR/USD • GBP/USD • USD/CHF • USD/CAD • EUR/GBP • AUD/USD • EUR/JPY • GBP/JPY • AUD/JPY • EUR/AUD • EUR/CAD • GBP/AUD • GBP/CAD • AUD/CHF • CHF/JPY • GBP/CHF • AUD/CAD • EUR/CHF • CAD/CHF • CAD/JPY •&nbsp;</span>
+  <header>
+    <div class="brand">
+      <b>EASY MILLION</b><i>|</i><em>AI BOT</em>
     </div>
-  </div>
-  <!-- Price label (positioned by JS) -->
-  <div id="chartPrice"></div>
-  <!-- Foreground -->
-  <div class="s0-content">
-    <div class="s0-brand">
-      <div class="home-logo">EASY MILLION</div>
-      <div class="home-subtitle">AI-Powered Trading Signals</div>
+    <div class="navback">
+      <button class="tap glass backbtn" id="backBtn" aria-label="Назад">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span id="screenTitle"></span>
     </div>
-    <div class="s0-btn">
-      <button class="home-get-btn" onclick="transitionTo('s0','s1')">⚡ GET AI SIGNAL</button>
+    <div class="pill glass">
+      <span class="dot"></span>
+      <span class="long">ИИ-движок v4.2 активен</span>
+      <span class="short">v4.2</span>
     </div>
-  </div>
-  <div class="s0-footer">Powered by AI • Real-time signals</div>
-</div>
+  </header>
 
-<!-- SCREEN 1: Pair Selection -->
-<div class="screen hidden" id="s1">
-  <div style="text-align:center;padding:24px 24px 14px;flex-shrink:0">
-    <div class="home-logo" style="font-size:26px;letter-spacing:4px">EASY MILLION</div>
-    <div class="home-subtitle" style="margin-top:6px">Select a currency pair</div>
-  </div>
-  <div class="sheet-search-wrap">
-    <svg class="search-icon" viewBox="0 0 20 20" fill="none">
-      <circle cx="8.5" cy="8.5" r="5.5" stroke="white" stroke-width="1.5"/>
-      <path d="M13 13L17 17" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-    <input class="search-input" id="searchInput" type="text" placeholder="Search pairs..." oninput="filterPairs(this.value)">
-  </div>
-  <div class="sheet-pairs" id="pairsList"></div>
-</div>
-
-<!-- SCREEN 2: Get Signal -->
-<div class="screen hidden" id="s2">
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px">
-    <div class="s2-pair-name" id="s2PairName"></div>
-    <div class="s2-pair-sub">TRADING SIGNALS</div>
-    <div class="expiry-selector">
-      <button class="expiry-btn active" onclick="setExpiry(1,this)">1 MIN</button>
-      <button class="expiry-btn" onclick="setExpiry(3,this)">3 MIN</button>
-      <button class="expiry-btn" onclick="setExpiry(5,this)">5 MIN</button>
-    </div>
-    <button class="get-signal-btn" id="getSignalBtn" onclick="startLoading(event)">
-      <div class="btn-inner">
-        <span class="btn-icon">⚡</span>
-        <span class="btn-text">GET SIGNAL</span>
+  <!-- ============ 1. ГЛАВНЫЙ ============ -->
+  <section class="screen active" id="s-hub">
+    <div class="ticker" aria-hidden="true"><div class="ticker-track" id="ticker"></div></div>
+    <div class="stage">
+      <div class="candles" id="candles" aria-hidden="true"></div>
+      <div class="candles-fade" aria-hidden="true"></div>
+      <div class="live-tag">ЖИВОЙ РЫНОК • СИМУЛЯЦИЯ</div>
+      <div class="hero">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <h1>Точные сигналы, созданные искусственным интеллектом.</h1>
+          <p>Выберите пару, задайте экспирацию и запустите сканирование рынка.</p>
+        </div>
+        <div class="stats">
+          <div class="stat glass"><b id="statPairs">20</b><span>пар</span></div>
+          <div class="stat glass"><b>1–5</b><span>мин экспирация</span></div>
+          <div class="stat glass"><b>~5 сек</b><span>анализ</span></div>
+        </div>
+        <button class="tap cta" id="ctaBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="#070709" aria-hidden="true"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+          ПОЛУЧИТЬ СИГНАЛ
+        </button>
       </div>
-    </button>
-    <div style="margin-top:32px;font-size:12px;color:var(--muted);letter-spacing:1px;text-align:center">
-      Tap the button to analyze<br>current market conditions
     </div>
-  </div>
-  <div style="padding:20px;padding-bottom:max(20px,env(safe-area-inset-bottom,20px));text-align:center">
-    <button class="back-btn" onclick="goBack('s2','s1')">← Back</button>
-  </div>
-</div>
+  </section>
 
-<!-- SCREEN 2B: Loading -->
-<div class="screen hidden" id="s2b">
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
-    <div class="loading-ring-wrap">
-      <div class="loading-ring">
-        <svg viewBox="0 0 140 140" width="140" height="140">
-          <defs>
-            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="rgba(255,255,255,0.9)"/>
-              <stop offset="100%" stop-color="rgba(255,255,255,0.5)"/>
-            </linearGradient>
-          </defs>
-          <circle class="ring-track" cx="70" cy="70" r="60"/>
-          <circle class="ring-progress" cx="70" cy="70" r="60"/>
-        </svg>
-        <div class="ring-inner">
-          <div class="ring-dots">
-            <div class="ring-dot"></div>
-            <div class="ring-dot"></div>
-            <div class="ring-dot"></div>
-          </div>
+  <!-- ============ 2. ВЫБОР АКТИВА ============ -->
+  <section class="screen pad scroll" id="s-pairs">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <h2 class="h2">Выбор актива</h2>
+      <p class="sub">Основные и кросс-пары · цены — симуляция</p>
+    </div>
+    <label for="pairSearch" class="sr">Поиск пары</label>
+    <div class="search glass">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9BA1A6" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="pairSearch" type="search" placeholder="Поиск EUR, USD, JPY…" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+    </div>
+    <div class="plist" id="pairList"></div>
+    <div class="empty" id="pairEmpty" hidden>Ничего не найдено</div>
+  </section>
+
+  <!-- ============ 3. НАСТРОЙКА ============ -->
+  <section class="screen pad scroll" id="s-config">
+    <div class="pcard glass" id="priceCard">
+      <div class="top">
+        <div class="who">
+          <div class="badge2" aria-hidden="true"><div class="b1" id="cfgB"></div><div class="b2" id="cfgQ"></div></div>
+          <div style="min-width:0"><b id="cfgLabel"></b><span id="cfgName"></span></div>
+        </div>
+        <span class="chip" id="cfgSpread" style="border:none;padding:3px 8px"></span>
+      </div>
+      <div class="bottom">
+        <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+          <span style="font-size:11px;color:var(--mute);letter-spacing:.1em">ТЕКУЩАЯ ЦЕНА · СИМ.</span>
+          <span class="bigp" id="cfgPrice"></span>
+        </div>
+        <span class="chg" id="cfgChg"></span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;flex-shrink:0">
+      <span class="label">ВРЕМЯ ЭКСПИРАЦИИ</span>
+      <div class="seg" id="tfSeg" role="group" aria-label="Время экспирации">
+        <div class="thumb" aria-hidden="true"></div>
+        <button class="tap" data-tf="0" aria-pressed="true">1 МИН</button>
+        <button class="tap" data-tf="1" aria-pressed="false">3 МИН</button>
+        <button class="tap" data-tf="2" aria-pressed="false">5 МИН</button>
+      </div>
+    </div>
+
+    <div class="launch">
+      <div class="launch-wrap">
+        <div class="rg" aria-hidden="true"></div>
+        <div class="rg d" aria-hidden="true"></div>
+        <div class="dash" aria-hidden="true"></div>
+        <button class="tap launch-btn" id="launchBtn">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+          <span>ЗАПУСТИТЬ<br>АНАЛИЗ ИИ</span>
+        </button>
+      </div>
+      <span style="font-size:12px;color:var(--mute)" id="cfgFoot"></span>
+    </div>
+  </section>
+
+  <!-- ============ 4. АНАЛИЗ ИИ ============ -->
+  <section class="screen" id="s-scan">
+    <div class="scan-pill">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="#E8B86B" aria-hidden="true"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+      <span id="scanTag"></span>
+    </div>
+    <div class="scan-ring">
+      <svg width="240" height="240" viewBox="0 0 240 240" aria-hidden="true" style="transform:rotate(-90deg)">
+        <circle cx="120" cy="120" r="90" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+        <circle id="scanArc" cx="120" cy="120" r="90" fill="none" stroke="#E8B86B" stroke-width="5" stroke-linecap="round" stroke-dasharray="565.5" stroke-dashoffset="565.5" style="filter:drop-shadow(0 0 8px rgba(232,184,107,0.55));transition:stroke-dashoffset .1s linear"/>
+      </svg>
+      <svg width="240" height="240" viewBox="0 0 240 240" aria-hidden="true" style="animation:spin 3s linear infinite">
+        <circle cx="120" cy="120" r="108" fill="none" stroke="rgba(232,184,107,0.28)" stroke-width="1.5" stroke-dasharray="4 10"/>
+      </svg>
+      <svg width="240" height="240" viewBox="0 0 240 240" aria-hidden="true" style="animation:spinRev 5s linear infinite">
+        <circle cx="120" cy="120" r="72" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="40 20"/>
+      </svg>
+      <div class="core">
+        <span class="pct" role="status" id="scanPct">0%</span>
+        <div class="dots" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+    <div class="stages" id="stages"></div>
+    <button class="tap ghost" id="scanCancel">Отмена</button>
+  </section>
+
+  <!-- ============ 5. СИГНАЛ ГОТОВ ============ -->
+  <section class="screen pad scroll" id="s-result">
+    <div class="sigcard">
+      <div class="top">
+        <span class="tag" id="resTag"></span>
+        <div class="cd">
+          <svg width="60" height="60" viewBox="0 0 60 60" aria-hidden="true">
+            <circle cx="30" cy="30" r="25" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3.5"/>
+            <circle id="cdArc" cx="30" cy="30" r="25" fill="none" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="157.1" stroke-dashoffset="0" style="transition:stroke-dashoffset 1s linear;stroke:var(--sig)"/>
+          </svg>
+          <span class="txt" role="timer" aria-label="До экспирации" id="cdTxt">1:00</span>
         </div>
       </div>
-    </div>
-    <div class="loading-text" id="loadingText">Analyzing market...</div>
-    <div class="loading-bar-wrap">
-      <div class="loading-bar" id="loadingBar"></div>
-    </div>
-  </div>
-</div>
-
-<!-- SCREEN 3: Signal Result -->
-<div class="screen hidden" id="s3">
-  <div class="s3-header">
-    <button class="back-btn" onclick="goBack('s3','s2')">← Back</button>
-    <div class="s3-pair-badge" id="s3PairBadge"></div>
-  </div>
-
-  <div class="signal-card" id="signalCard">
-    <div class="signal-glow" id="signalGlow"></div>
-    <div class="signal-arrow" id="signalArrow"></div>
-    <div class="signal-direction" id="signalDirection"></div>
-    <div class="signal-meta">
-      <div class="meta-item">
-        <div class="meta-label">Asset</div>
-        <div class="meta-val" id="s3PairName"></div>
+      <div class="dirrow">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <span class="big" id="resDir">ПОКУПКА</span>
+          <span class="en" id="resEn">BUY</span>
+        </div>
+        <div class="arrowbox" aria-hidden="true">
+          <div id="resArrow"><div class="bob">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="stroke:var(--sig)"><path d="M7 17L17 7"/><path d="M8 7h9v9"/></svg>
+          </div></div>
+        </div>
       </div>
-      <div class="meta-item">
-        <div class="meta-label">Entry</div>
-        <div class="meta-val" id="s3EntryPrice">—</div>
-      </div>
-      <div class="meta-item">
-        <div class="meta-label">Expiry</div>
-        <div class="meta-val" id="s3Expiry">1 MIN</div>
+      <div class="dgrid">
+        <div class="cell"><div class="k">Актив</div><div class="v" id="resPair"></div></div>
+        <div class="cell"><div class="k">Цена входа</div><div class="v" id="resEntry"></div></div>
+        <div class="cell"><div class="k">Время экспирации</div><div class="v"><span id="resExpiry"></span> <small id="resTf"></small></div></div>
+        <div class="cell"><div class="k">Рынок</div><div style="margin-top:5px"><span class="cond" id="resCond"></span></div></div>
       </div>
     </div>
-    <div class="volatility-row">
-      <div class="vol-dot" id="volDot"></div>
-      <span class="vol-label" id="volLabel"></span>
-    </div>
-    <div class="conf-row">
-      <div class="conf-label">Signal Confidence</div>
-      <div class="conf-val" id="s3Confidence">—</div>
-    </div>
-  </div>
 
-  <div class="analysis-wrap" id="analysisWrap">
-    <button class="analysis-toggle" onclick="toggleAnalysis()">
-      <span>📊 Analysis Details</span>
-      <span class="analysis-chevron" id="analysisChevron">›</span>
-    </button>
-    <div class="analysis-body" id="analysisBody" data-open="false" style="max-height:0;opacity:0">
-      <div class="analysis-summary" id="analysisSummary"></div>
-      <div id="analysisIndicators"></div>
+    <div class="gauge glass">
+      <div class="g">
+        <svg width="200" height="112" viewBox="0 0 200 112" aria-hidden="true">
+          <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8" stroke-linecap="round"/>
+          <path id="gaugeArc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke-width="8" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="251.3" style="stroke:var(--sig);filter:drop-shadow(0 0 6px var(--sig-glow))"/>
+        </svg>
+        <span class="n" id="confTxt">0%</span>
+      </div>
+      <span class="label" style="margin-top:4px">УВЕРЕННОСТЬ СИГНАЛА</span>
     </div>
-  </div>
 
-  <div class="countdown-wrap" style="position:relative">
-    <div class="timer-svg-wrap">
-      <svg class="timer-svg" width="72" height="72" viewBox="0 0 72 72">
-        <circle class="timer-track" cx="36" cy="36" r="30"/>
-        <circle class="timer-prog" id="timerProg" cx="36" cy="36" r="30"/>
-      </svg>
-      <div class="timer-text" id="timerText">1:00</div>
+    <div class="acc" id="acc" data-open="false">
+      <button class="tap" id="accBtn" aria-expanded="false" aria-controls="accBody">
+        Детали анализа
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9BA1A6" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="body" id="accBody"></div>
     </div>
-    <div class="timer-info">
-      <div class="timer-title">Countdown</div>
-      <div class="timer-status" id="timerStatus">Signal Active</div>
-      <div class="timer-sub">Monitor your position</div>
+
+    <div class="btns">
+      <button class="tap btn-sec" data-act="pairs">Выбрать пару</button>
+      <button class="tap btn-pri" data-act="again">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#070709" aria-hidden="true"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+        Новый сигнал
+      </button>
     </div>
-  </div>
-  <button class="cancel-signal-btn" id="cancelSignalBtn" onclick="cancelSignal()">✕ Cancel &amp; Choose Pair</button>
+    <p class="disc">Не является финансовой рекомендацией. Торговля связана с риском потери средств.</p>
+  </section>
+
+  <!-- ============ 6. ИТОГ СДЕЛКИ ============ -->
+  <section class="screen pad scroll" id="s-outcome">
+    <div class="outcard" id="outCard">
+      <div class="tag" id="outTag"></div>
+      <div class="checking"><span class="spin" aria-hidden="true"></span><span role="status">Проверяем результат…</span></div>
+      <div class="verdict">
+        <span class="big" id="outBig"></span>
+        <span class="en" id="outEn"></span>
+      </div>
+      <div class="dgrid">
+        <div class="cell"><div class="k">Цена входа</div><div class="v" id="outEntry">—</div></div>
+        <div class="cell"><div class="k">Цена закрытия</div><div class="v" id="outExit">—</div></div>
+        <div class="cell"><div class="k">Сигнал</div><div class="v" id="outDir">—</div></div>
+        <div class="cell"><div class="k">Изменение</div><div class="v" id="outMove">—</div></div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="tap btn-sec" data-act="pairs">Выбрать пару</button>
+      <button class="tap btn-pri" data-act="again">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="#070709" aria-hidden="true"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>
+        Новый сигнал
+      </button>
+    </div>
+    <p class="disc">Не является финансовой рекомендацией. Торговля связана с риском потери средств.</p>
+  </section>
+
+  <!-- ============ 7. ОСОБЫЕ СОСТОЯНИЯ ============ -->
+  <section class="screen pad scroll" id="s-state">
+    <div class="statecard glass">
+      <div class="st-icon" aria-hidden="true"><div class="rg"></div><div class="rg d"></div><div class="core" id="stIcon"></div></div>
+      <h3 id="stTitle"></h3>
+      <p id="stMsg"></p>
+      <span class="detail" id="stDetail" hidden></span>
+    </div>
+    <div class="state-btns">
+      <button class="tap btn-pri" id="stPri"></button>
+      <button class="tap btn-sec" id="stSec"></button>
+    </div>
+  </section>
 </div>
-
-<!-- Full-screen result overlay (outside all screens) -->
-<div id="resultOverlay">
-  <div id="roParticles"></div>
-  <div class="ro-card" id="roCard">
-    <div class="ro-label">TIME'S UP</div>
-    <div class="ro-checking" id="roChecking">Checking result…</div>
-    <div class="ro-verdict" id="roVerdict" style="display:none"></div>
-    <div class="ro-prices" id="roPrices" style="display:none"></div>
-    <button class="new-signal-btn" id="newSignalBtn" onclick="newSignal()" style="display:none">NEW SIGNAL</button>
-  </div>
-</div>
-
-<!-- SCREEN 4: Market Closed -->
-<div class="screen hidden" id="s4">
-  <div class="closed-top">
-    <div class="closed-moon-wrap">
-      <div class="closed-ring closed-ring-1"></div>
-      <div class="closed-ring closed-ring-2"></div>
-      <div class="closed-moon-emoji">🌙</div>
-    </div>
-    <div class="closed-title">Markets Closed</div>
-    <div class="closed-message">
-      Forex markets rest on weekends.<br>
-      Come back <strong>Monday</strong>! 💤
-    </div>
-  </div>
-  <div class="closed-bottom">
-    <button class="home-get-btn" style="animation:none" onclick="goBack('s4','s0')">← BACK TO HOME</button>
-  </div>
-</div>
-
-<!-- SCREEN 5: No Signal -->
-<div class="screen hidden" id="s5">
-  <div class="closed-top">
-    <div class="nosig-icon">🔍</div>
-    <div class="closed-title" id="noSignalTitle">No Signal</div>
-    <div class="closed-message" id="noSignalMsg"></div>
-  </div>
-  <div class="closed-bottom" style="display:flex;flex-direction:column;gap:12px">
-    <button class="home-get-btn" style="animation:none" onclick="goBack('s5','s1')">Choose Another Pair</button>
-    <button class="home-get-btn" style="animation:none;opacity:0.65;font-size:14px" onclick="retrySignal()">↻ Try Again</button>
-  </div>
-</div>
-
-<!-- SCREEN 6: Rate Limited -->
-<div class="screen hidden" id="s6">
-  <div class="closed-top">
-    <div class="closed-moon-wrap">
-      <div class="closed-ring closed-ring-1"></div>
-      <div class="closed-ring closed-ring-2"></div>
-      <div class="closed-moon-emoji">⏱️</div>
-    </div>
-    <div class="closed-title">Slow Down</div>
-    <div class="closed-message" id="s6Message">
-      You're requesting signals too quickly.<br>Please try again in <strong>1 minute</strong>.
-    </div>
-  </div>
-  <div class="closed-bottom">
-    <button class="home-get-btn" style="animation:none" onclick="goBack('s6','s2')">← BACK</button>
-  </div>
-</div>
-
-<div class="error-toast" id="errorToast"></div>
 
 <script>
-  try { window.Telegram?.WebApp?.ready(); window.Telegram?.WebApp?.expand(); } catch(e) {}
+(() => {
+  'use strict';
 
-  const telegramUserId = String(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || 'unknown');
-
+  // ── Config ────────────────────────────────────────────────────────────────
   const API_BASE = 'https://web-production-49c84.up.railway.app';
+  const RATES_URL = 'https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR,GBP,CHF,CAD,AUD,JPY';
+  const SIGNAL_TIMEOUT_MS = 15000;
+  const UP = '#22E39A', DN = '#FF4D61', AMBER = '#E8B86B', MUTE = '#9BA1A6';
 
-  const pairs = [
-    { name:'EUR/USD', flags:'🇪🇺🇺🇸', base:'Euro', quote:'US Dollar' },
-    { name:'GBP/USD', flags:'🇬🇧🇺🇸', base:'British Pound', quote:'US Dollar' },
-    { name:'USD/CHF', flags:'🇺🇸🇨🇭', base:'US Dollar', quote:'Swiss Franc' },
-    { name:'USD/CAD', flags:'🇺🇸🇨🇦', base:'US Dollar', quote:'Canadian Dollar' },
-    { name:'EUR/GBP', flags:'🇪🇺🇬🇧', base:'Euro', quote:'British Pound' },
-    { name:'AUD/USD', flags:'🇦🇺🇺🇸', base:'Australian Dollar', quote:'US Dollar' },
-    { name:'EUR/JPY', flags:'🇪🇺🇯🇵', base:'Euro', quote:'Japanese Yen' },
-    { name:'GBP/JPY', flags:'🇬🇧🇯🇵', base:'British Pound', quote:'Japanese Yen' },
-    { name:'AUD/JPY', flags:'🇦🇺🇯🇵', base:'Australian Dollar', quote:'Japanese Yen' },
-    { name:'EUR/AUD', flags:'🇪🇺🇦🇺', base:'Euro', quote:'Australian Dollar' },
-    { name:'EUR/CAD', flags:'🇪🇺🇨🇦', base:'Euro', quote:'Canadian Dollar' },
-    { name:'GBP/AUD', flags:'🇬🇧🇦🇺', base:'British Pound', quote:'Australian Dollar' },
-    { name:'GBP/CAD', flags:'🇬🇧🇨🇦', base:'British Pound', quote:'Canadian Dollar' },
-    { name:'AUD/CHF', flags:'🇦🇺🇨🇭', base:'Australian Dollar', quote:'Swiss Franc' },
-    { name:'CHF/JPY', flags:'🇨🇭🇯🇵', base:'Swiss Franc', quote:'Japanese Yen' },
-    { name:'GBP/CHF', flags:'🇬🇧🇨🇭', base:'British Pound', quote:'Swiss Franc' },
-    { name:'AUD/CAD', flags:'🇦🇺🇨🇦', base:'Australian Dollar', quote:'Canadian Dollar' },
-    { name:'EUR/CHF', flags:'🇪🇺🇨🇭', base:'Euro', quote:'Swiss Franc' },
-    { name:'CAD/CHF', flags:'🇨🇦🇨🇭', base:'Canadian Dollar', quote:'Swiss Franc' },
-    { name:'CAD/JPY', flags:'🇨🇦🇯🇵', base:'Canadian Dollar', quote:'Japanese Yen' },
+  // ── Telegram ──────────────────────────────────────────────────────────────
+  const tg = window.Telegram && window.Telegram.WebApp;
+  const safe = fn => { try { fn(); } catch (e) {} };
+  safe(() => tg.ready());
+  safe(() => tg.expand());
+  safe(() => tg.setHeaderColor('#070709'));
+  safe(() => tg.setBackgroundColor('#070709'));
+  safe(() => tg.isVersionAtLeast && tg.isVersionAtLeast('7.7') && tg.disableVerticalSwipes());
+  const haptic = {
+    tap: () => safe(() => tg.HapticFeedback.impactOccurred('light')),
+    select: () => safe(() => tg.HapticFeedback.selectionChanged()),
+    notify: t => safe(() => tg.HapticFeedback.notificationOccurred(t)),
+  };
+  const telegramUserId = String((tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) || 'unknown');
+
+  // ── Currencies & pairs ────────────────────────────────────────────────────
+  const CUR = {
+    EUR: { s: '€',  n: 'Евро' },
+    USD: { s: '$',  n: 'Доллар США' },
+    GBP: { s: '£',  n: 'Фунт стерлингов' },
+    JPY: { s: '¥',  n: 'Японская иена' },
+    AUD: { s: 'A$', n: 'Австралийский доллар' },
+    CHF: { s: '₣',  n: 'Швейцарский франк' },
+    CAD: { s: 'C$', n: 'Канадский доллар' },
+  };
+  // Fallback USD-based rates (units per 1 USD), used if the live rates request fails.
+  const FALLBACK_RATES = { USD: 1, EUR: 0.89871, GBP: 0.75149, CHF: 0.82987, CAD: 1.4235, AUD: 1.4579, JPY: 159.23 };
+  // [base, quote, typical spread in pips]
+  const PAIR_DEFS = [
+    ['EUR','USD','0.6'], ['GBP','USD','0.9'], ['USD','CHF','1.1'], ['USD','CAD','1.0'],
+    ['EUR','GBP','1.2'], ['AUD','USD','0.7'], ['EUR','JPY','1.4'], ['GBP','JPY','1.9'],
+    ['AUD','JPY','1.6'], ['EUR','AUD','1.8'], ['EUR','CAD','1.9'], ['GBP','AUD','2.4'],
+    ['GBP','CAD','2.6'], ['AUD','CHF','1.7'], ['CHF','JPY','2.1'], ['GBP','CHF','2.2'],
+    ['AUD','CAD','1.6'], ['EUR','CHF','1.3'], ['CAD','CHF','1.8'], ['CAD','JPY','1.7'],
   ];
-
-  let selectedPair = null;
-  let selectedExpiry = 1;
-  let entryPrice = null;
-  let countdownInterval = null;
-  let countdownVisibilityCleanup = null;
-  let accInterval = null;
-
-  function setExpiry(val, btn) {
-    selectedExpiry = val;
-    document.querySelectorAll('.expiry-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    try { window.Telegram?.WebApp?.HapticFeedback?.selectionChanged(); } catch(e) {}
+  const pairs = PAIR_DEFS.map(([b, q, spread]) => ({
+    id: b + q, b, q, label: b + '/' + q, spread,
+    d: q === 'JPY' ? 3 : 5,
+    p: 0, anchor: 0, open: 0, dir: 1,
+    name: CUR[b].n + ' · ' + CUR[q].n,
+  }));
+  function applyRates(rates) {
+    pairs.forEach(pr => {
+      const v = rates[pr.q] / rates[pr.b];
+      if (!isFinite(v) || v <= 0) return;
+      pr.p = pr.anchor = pr.open = v;
+    });
   }
+  applyRates(FALLBACK_RATES);
+  const pairById = id => pairs.find(p => p.id === id) || pairs[0];
+  const fmt = (pr, v) => Number(v).toFixed(pr.d);
 
-  function renderPairs(list) {
-    const el = document.getElementById('pairsList');
-    if (!list.length) {
-      el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px">No pairs found</div>';
-      return;
+  // ── State ─────────────────────────────────────────────────────────────────
+  const TF_MIN = [1, 3, 5];
+  const TF_UP = ['1 МИН', '3 МИН', '5 МИН'];
+  const TF_LOW = ['1 мин', '3 мин', '5 мин'];
+  const S = {
+    screen: 'hub', pairId: 'EURUSD', tf: 0, query: '',
+    run: 0,              // increments on every new analysis — stale responses are ignored
+    signal: null,        // last real signal from the backend
+    cdTimer: null, cdEnd: 0, cdTotal: 60,
+    scanTimer: null, confTimer: null, retryTimer: null,
+    abort: null,
+  };
+  const $ = id => document.getElementById(id);
+  const app = $('app');
+  const sel = () => pairById(S.pairId);
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+  const TITLES = { pairs: 'Валютные пары', config: 'Настройка сигнала', scan: 'Анализ ИИ', result: 'Сигнал готов', outcome: 'Итог сделки', state: '' };
+  const BACK = { pairs: 'hub', config: 'pairs', scan: 'config', result: 'config', outcome: 'config', state: 'config' };
+  let stateBack = 'config';
+
+  function go(screen, opts) {
+    opts = opts || {};
+    if (screen !== 'scan') stopScan();
+    if (screen !== 'result') stopCountdown();
+    if (screen !== 'state') clearInterval(S.retryTimer);
+    const prev = S.screen;
+    const prevEl = $('s-' + prev), nextEl = $('s-' + screen);
+    if (prev !== screen) {
+      prevEl.classList.remove('active');
+      prevEl.classList.add('leaving');
+      setTimeout(() => prevEl.classList.remove('leaving'), 200);
     }
-    el.innerHTML = list.map(p => `
-      <div class="pair-row" onclick="selectPair('${p.name}')">
-        <div class="pair-flags">${p.flags}</div>
-        <div class="pair-info">
-          <div class="pair-name">${p.name}</div>
-          <div class="pair-label">${p.base} / ${p.quote}</div>
-        </div>
-        <div class="chevron">›</div>
-      </div>
-    `).join('');
+    nextEl.classList.remove('active', 'leaving');
+    void nextEl.offsetWidth;            // restart entrance animation
+    nextEl.classList.add('active');
+    nextEl.scrollTop = 0;
+    S.screen = screen;
+    app.dataset.screen = screen;
+    $('screenTitle').textContent = opts.title || TITLES[screen] || '';
+    const orb = screen === 'scan' ? AMBER : screen === 'result' ? app.style.getPropertyValue('--sig') : '#FFFFFF';
+    app.style.setProperty('--orb', (orb || '#FFFFFF').trim());
+    if (screen === 'pairs') renderPairs();
+    if (screen === 'config') renderConfig();
+    if (screen !== 'result') collapseDetails();
+    safe(() => screen === 'hub' ? tg.BackButton.hide() : tg.BackButton.show());
+  }
+  function back() {
+    if (S.screen === 'hub') return;
+    if (S.screen === 'scan') { cancelScan(); return; }
+    go(S.screen === 'state' ? stateBack : (BACK[S.screen] || 'hub'));
+  }
+  $('backBtn').addEventListener('click', back);
+  safe(() => tg.BackButton.onClick(back));
+
+  // ── Simulated market (ticker, list, price card, background candles) ───────
+  function tickPrices() {
+    pairs.forEach(pr => {
+      const noise = (Math.random() - 0.5) * pr.anchor * 0.00016;
+      const pull = (pr.anchor - pr.p) * 0.04;
+      const mv = noise + pull;
+      pr.p += mv;
+      pr.dir = mv >= 0 ? 1 : -1;
+    });
+  }
+  // Re-base a pair's simulated price onto a real price (entry / exit) so the
+  // screen never contradicts the backend. Shift the session "open" by the same
+  // amount so the % change stays continuous.
+  function rebase(pairId, realPrice) {
+    const pr = pairById(pairId);
+    const v = Number(realPrice);
+    if (!isFinite(v) || v <= 0) return;
+    pr.open += v - pr.p;
+    pr.p = pr.anchor = v;
   }
 
-  function filterPairs(q) {
-    renderPairs(pairs.filter(p => p.name.toLowerCase().includes(q.toLowerCase())));
+  const tickerEl = $('ticker');
+  function buildTicker() {
+    const html = pairs.map(pr => `<div class="tk" data-id="${pr.id}"><span class="l">${pr.label}</span><span class="p"></span><span class="a"></span></div>`).join('');
+    tickerEl.innerHTML = html + html;
   }
-
-  function selectPair(name) {
-    selectedPair = pairs.find(p => p.name === name);
-    document.getElementById('s2PairName').textContent = selectedPair.name;
-    transitionTo('s1', 's2');
-    try { window.Telegram?.WebApp?.HapticFeedback?.selectionChanged(); } catch(e) {}
-  }
-
-  function goBack(from, to) {
-    if (from === 's3') { clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.(); }
-    document.getElementById(from).classList.add('hidden');
-    document.getElementById(to).classList.remove('hidden', 'hidden-left');
-  }
-
-  function transitionTo(from, to) {
-    document.getElementById(from).classList.add('hidden-left');
-    document.getElementById(to).classList.remove('hidden', 'hidden-left');
-  }
-
-  // Shared loading animation + fetch logic used by startLoading and retrySignal
-  function fetchSignalAndShow() {
-    const bar = document.getElementById('loadingBar');
-    const textEl = document.getElementById('loadingText');
-    const phrases = ['Analyzing market...','Checking indicators...','Reading RSI...','Calculating signal...'];
-    let phraseIndex = 0;
-    const startTime = performance.now();
-    let lastPhrase = startTime;
-    let firstFrame = true;
-    bar.style.width = '0%';
-    textEl.style.transition = 'none'; textEl.style.opacity = '1';
-    textEl.textContent = phrases[0];
-    function frame(now) {
-      if (firstFrame) {
-        firstFrame = false;
-        console.log('[DBG] 3 first rAF frame', Date.now(), 'elapsed since startTime:', (now - startTime).toFixed(1) + 'ms', 's2b computed opacity:', getComputedStyle(document.getElementById('s2b')).opacity);
-      }
-      bar.style.width = (Math.min((now - startTime) / 3000, 1) * 100) + '%';
-      if (now - lastPhrase > 750 && phraseIndex < phrases.length - 1) {
-        phraseIndex++; lastPhrase = now;
-        textEl.style.transition = 'opacity 0.2s'; textEl.style.opacity = '0';
-        setTimeout(() => { textEl.textContent = phrases[phraseIndex]; textEl.style.opacity = '1'; }, 200);
-      }
-      if (now - startTime < 3000) requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-    console.log('[DBG] 4a fetch start', Date.now(), 'pair:', selectedPair?.name, 'expiry:', selectedExpiry);
-    const fetchPromise = fetch(
-      `${API_BASE}/signal?pair=${encodeURIComponent(selectedPair.name)}&expiry=${selectedExpiry}&user_id=${encodeURIComponent(telegramUserId)}`,
-      { signal: controller.signal }
-    )
-      .then(r => r.json())
-      .catch(err => {
-        if (err.name === 'AbortError') return { market_closed: true, startup: true };
-        return { error: 'Signal server unavailable. Please try again.' };
-      })
-      .finally(() => { console.log('[DBG] 4b fetch resolved', Date.now()); clearTimeout(timeoutId); });
-
-    Promise.all([
-      new Promise(resolve => setTimeout(resolve, 3000)),
-      fetchPromise
-    ]).then(([, data]) => {
-      if (data.rate_limited) showRateLimited(data);
-      else if (data.market_closed) showMarketClosed(data.startup);
-      else if (data.no_signal) showNoSignal(data);
-      else if (data.error) showError(data.error);
-      else showResult(data);
+  function renderTicker() {
+    tickerEl.querySelectorAll('.tk').forEach(el => {
+      const pr = pairById(el.dataset.id);
+      const c = pr.dir > 0 ? UP : DN;
+      const p = el.children[1], a = el.children[2];
+      p.textContent = fmt(pr, pr.p); p.style.color = c;
+      a.textContent = pr.dir > 0 ? '▲' : '▼'; a.style.color = c;
     });
   }
 
-  function startLoading(e) {
-    console.log('[DBG] 1 startLoading tap', Date.now(), 's2b classes:', document.getElementById('s2b').className);
-    const day = new Date().getDay();
-    if (day === 0 || day === 6) {
-      document.querySelector('#s4 .closed-moon-emoji').textContent = '🌙';
-      document.querySelector('#s4 .closed-title').textContent = 'Markets Closed';
-      document.querySelector('#s4 .closed-title').style.cssText = '';
-      document.querySelector('#s4 .closed-message').innerHTML = 'Forex markets rest on weekends.<br>Come back <strong>Monday</strong>! 💤';
-      transitionTo('s2', 's4');
-      try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
-      return;
-    }
-
-    const btn = e.currentTarget;
-    const size = btn.getBoundingClientRect().width;
-    const ripple = document.createElement('div');
-    ripple.className = 'ripple';
-    ripple.style.cssText = `width:${size}px;height:${size}px;left:0;top:0`;
-    btn.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 700);
-    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred('medium'); } catch(e) {}
-
-    document.getElementById('s2').classList.add('hidden-left');
-    document.getElementById('s2b').classList.remove('hidden', 'hidden-left');
-    console.log('[DBG] 2 s2b shown', Date.now(), 's2b classes after remove:', document.getElementById('s2b').className, 's2b computed opacity:', getComputedStyle(document.getElementById('s2b')).opacity);
-    fetchSignalAndShow();
+  // Background candlesticks (monochrome)
+  const candlesEl = $('candles');
+  let candles = [];
+  function nextCandle(o) {
+    const c = o + (Math.random() - 0.5) * 8;
+    return { o, c, h: Math.max(o, c) + Math.random() * 3, l: Math.min(o, c) - Math.random() * 3 };
+  }
+  function seedCandles() {
+    const n = Math.max(26, Math.ceil((candlesEl.clientWidth || 390) / 15) + 1);
+    candles = []; let v = 50;
+    for (let i = 0; i < n; i++) { const k = nextCandle(v); candles.push(k); v = k.c; }
+    candlesEl.innerHTML = candles.map(() => '<div class="w"></div><div class="bd"></div>').join('');
+  }
+  function renderCandles() {
+    if (!candles.length) return;
+    let mn = Infinity, mx = -Infinity;
+    candles.forEach(c => { mn = Math.min(mn, c.l); mx = Math.max(mx, c.h); });
+    const span = (mx - mn) || 1, H = 290, T = 50;
+    const y = v => T + (1 - (v - mn) / span) * H;
+    const els = candlesEl.children, last = candles.length - 1;
+    candles.forEach((c, i) => {
+      const isUp = c.c >= c.o, top = y(Math.max(c.o, c.c)), bot = y(Math.min(c.o, c.c));
+      const op = (0.3 + 0.7 * i / last).toFixed(2);
+      const border = isUp ? 'rgba(255,255,255,0.26)' : 'rgba(255,255,255,0.16)';
+      const w = els[i * 2].style, b = els[i * 2 + 1].style;
+      w.left = (9 + i * 15) + 'px'; w.top = y(c.h).toFixed(1) + 'px';
+      w.height = Math.max(1, y(c.l) - y(c.h)).toFixed(1) + 'px'; w.background = border; w.opacity = op;
+      b.left = (6 + i * 15) + 'px'; b.top = top.toFixed(1) + 'px'; b.height = Math.max(2, bot - top).toFixed(1) + 'px';
+      b.background = isUp ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.03)';
+      b.border = '1px solid ' + border; b.opacity = op;
+    });
   }
 
-  function retrySignal() {
-    document.getElementById('s5').classList.add('hidden-left');
-    document.getElementById('s2b').classList.remove('hidden', 'hidden-left');
-    fetchSignalAndShow();
+  // ── Screen 2: pair list ───────────────────────────────────────────────────
+  const listEl = $('pairList');
+  function matches(pr, raw) {
+    const q = raw.trim().toLowerCase().replace(/ё/g, 'е');
+    if (!q) return true;
+    const code = q.replace(/[\s/\\-]/g, '');
+    if (code && (pr.b + pr.q).toLowerCase().includes(code)) return true;
+    const ru = (CUR[pr.b].n + ' ' + CUR[pr.q].n).toLowerCase().replace(/ё/g, 'е');
+    return q.split(/\s+/).every(w => ru.includes(w));
   }
-
-  function showMarketClosed(isStartup) {
-    const title = document.querySelector('#s4 .closed-title');
-    const msg = document.querySelector('#s4 .closed-message');
-    const emoji = document.querySelector('#s4 .closed-moon-emoji');
-    if (isStartup) {
-      emoji.textContent = '⏳';
-      title.textContent = 'Server Starting Up';
-      title.style.cssText = 'color:var(--blue);text-shadow:0 0 10px var(--blue),0 0 30px var(--blue)';
-      msg.innerHTML = 'The server is waking up.<br>Please try again in <strong>10 seconds</strong> ☕';
-    } else {
-      emoji.textContent = '🌙';
-      title.textContent = 'Markets Closed';
-      title.style.cssText = '';
-      msg.innerHTML = 'Forex markets are resting this weekend.<br>Come back <strong>Monday</strong> and catch<br>the best signals 💤';
-    }
-    document.getElementById('s2b').classList.add('hidden-left');
-    document.getElementById('s4').classList.remove('hidden', 'hidden-left');
-    try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
+  function renderPairs() {
+    const list = pairs.filter(pr => matches(pr, S.query));
+    listEl.innerHTML = list.map(pr => `
+      <button class="tap prow" data-id="${pr.id}">
+        <div class="badge2" aria-hidden="true"><div class="b1">${CUR[pr.b].s}</div><div class="b2">${CUR[pr.q].s}</div></div>
+        <div class="pinfo"><b>${pr.label}</b><span>${pr.name}</span></div>
+        <div class="pright"><span class="pr"></span><span class="chip">${pr.spread} пипс</span></div>
+      </button>`).join('');
+    $('pairEmpty').hidden = list.length > 0;
+    updatePairPrices();
   }
-
-  function showRateLimited(data) {
-    const secs = data.retry_after_seconds;
-    const wait = (secs && secs < 60) ? `${secs} second${secs !== 1 ? 's' : ''}` : '1 minute';
-    document.getElementById('s6Message').innerHTML =
-      `You're requesting signals too quickly.<br>Please try again in <strong>${wait}</strong>.`;
-    document.getElementById('s2b').classList.add('hidden-left');
-    document.getElementById('s6').classList.remove('hidden', 'hidden-left');
-    try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('error'); } catch(e) {}
+  function updatePairPrices() {
+    listEl.querySelectorAll('.prow').forEach(el => {
+      const pr = pairById(el.dataset.id), s = el.querySelector('.pr');
+      s.textContent = fmt(pr, pr.p); s.style.color = pr.dir > 0 ? UP : DN;
+    });
   }
+  $('pairSearch').addEventListener('input', e => { S.query = e.target.value; renderPairs(); });
+  listEl.addEventListener('click', e => {
+    const row = e.target.closest('.prow'); if (!row) return;
+    haptic.tap();
+    S.pairId = row.dataset.id;
+    $('pairSearch').blur();
+    go('config');
+  });
 
-  function showNoSignal(data) {
-    document.getElementById('noSignalTitle').textContent = data.pair || 'No Signal';
-    document.getElementById('noSignalMsg').innerHTML =
-      `No clear signal for <strong>${data.pair}</strong> right now.<br>Try this pair again in <strong>2–3 minutes</strong>.`;
-    document.getElementById('s2b').classList.add('hidden-left');
-    document.getElementById('s5').classList.remove('hidden', 'hidden-left');
-    try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
+  // ── Screen 3: config ──────────────────────────────────────────────────────
+  function renderConfig() {
+    const pr = sel();
+    $('cfgB').textContent = CUR[pr.b].s; $('cfgQ').textContent = CUR[pr.q].s;
+    $('cfgLabel').textContent = pr.label; $('cfgName').textContent = pr.name;
+    $('cfgSpread').textContent = pr.spread + ' пипс';
+    $('cfgFoot').textContent = pr.label + ' · экспирация ' + TF_LOW[S.tf];
+    renderTf();
+    updateConfigPrice();
   }
+  function updateConfigPrice() {
+    const pr = sel();
+    const chg = (pr.p - pr.open) / pr.open * 100;
+    const p = $('cfgPrice'), c = $('cfgChg');
+    p.textContent = fmt(pr, pr.p); p.style.color = pr.dir > 0 ? UP : DN;
+    c.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(3) + '%'; c.style.color = chg >= 0 ? UP : DN;
+  }
+  function renderTf() {
+    $('tfSeg').style.setProperty('--i', S.tf);
+    $('tfSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.tf === S.tf)));
+    $('cfgFoot').textContent = sel().label + ' · экспирация ' + TF_LOW[S.tf];
+  }
+  $('tfSeg').addEventListener('click', e => {
+    const b = e.target.closest('button[data-tf]'); if (!b) return;
+    if (+b.dataset.tf !== S.tf) haptic.select();
+    S.tf = +b.dataset.tf; renderTf();
+  });
+  const card = $('priceCard');
+  card.addEventListener('pointermove', e => {
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--gx', Math.round((e.clientX - r.left) / r.width * 100) + '%');
+    card.style.setProperty('--gy', Math.round((e.clientY - r.top) / r.height * 100) + '%');
+  });
 
-  function showResult(data) {
-    console.log('[DBG] 5 showResult', Date.now(), 'signal:', data.signal, 's2b classes:', document.getElementById('s2b').className);
-    clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.();
+  // ── Screen 4: scan + real request ─────────────────────────────────────────
+  const STAGES = ['Подключение к пулам ликвидности…', 'Проверка индикаторов (RSI, MACD, Bollinger)…', 'Синтез индекса уверенности ИИ…'];
+  $('stages').innerHTML = STAGES.map(t => `
+    <div class="stg"><div class="ic">
+      <span class="pend" aria-hidden="true"></span><span class="spin" aria-hidden="true"></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Готово"><path d="M5 12l5 5L20 7"/></svg>
+    </div><span class="t">${t}</span></div>`).join('');
 
-    let dir = (data.signal || '').toUpperCase();
+  function renderScan(pct) {
+    $('scanArc').setAttribute('stroke-dashoffset', (565.5 * (1 - pct / 100)).toFixed(1));
+    $('scanPct').textContent = Math.floor(pct) + '%';
+    const st = pct < 34 ? 0 : pct < 70 ? 1 : 2;
+    $('stages').querySelectorAll('.stg').forEach((el, i) => {
+      const done = i < st || pct >= 100;
+      el.classList.toggle('done', done);
+      el.classList.toggle('on', !done && i === st);
+    });
+  }
+  function stopScan() {
+    clearInterval(S.scanTimer); S.scanTimer = null;
+    if (S.abort) { S.abort.abort(); S.abort = null; }
+  }
+  function cancelScan() {
+    S.run++;                // drop any response still in flight
+    stopScan();
+    haptic.tap();
+    go('config');
+  }
+  $('scanCancel').addEventListener('click', cancelScan);
+
+  function isWeekend() { const d = new Date().getUTCDay(); return d === 0 || d === 6; }
+
+  function startAnalysis() {
+    haptic.tap();
+    if (isWeekend()) { showState('closed'); return; }
+    const run = ++S.run;
+    const pr = sel();
+    $('scanTag').textContent = 'СКАНИРОВАНИЕ ' + pr.label + ' · ' + TF_UP[S.tf];
+    go('scan');
+    stopScan();
+    renderScan(0);
+
+    let pct = 0, data = null;
+    S.scanTimer = setInterval(() => {
+      // Wait at 92% until the server answers, then run to 100%.
+      const cap = data ? 100 : 92;
+      pct = Math.min(cap, pct + (data ? 3.5 : 0.8 + Math.random() * 0.7));
+      renderScan(pct);
+      if (pct >= 100) {
+        clearInterval(S.scanTimer); S.scanTimer = null;
+        setTimeout(() => { if (run === S.run && S.screen === 'scan') handleSignal(data, pr.id); }, 400);
+      }
+    }, 50);
+
+    const ctrl = new AbortController();
+    S.abort = ctrl;
+    const timeout = setTimeout(() => ctrl.abort(), SIGNAL_TIMEOUT_MS);
+    const url = `${API_BASE}/signal?pair=${encodeURIComponent(pr.label)}&expiry=${TF_MIN[S.tf]}&user_id=${encodeURIComponent(telegramUserId)}`;
+    fetch(url, { signal: ctrl.signal })
+      .then(r => r.json().catch(() => ({ error: 'Некорректный ответ сервера (HTTP ' + r.status + ')' })))
+      .catch(err => err.name === 'AbortError' ? { _timeout: true } : { _offline: true })
+      .then(d => {
+        clearTimeout(timeout);
+        if (run !== S.run) return;   // cancelled or superseded
+        S.abort = null;
+        data = d || { error: 'Пустой ответ сервера' };
+      });
+  }
+  $('launchBtn').addEventListener('click', startAnalysis);
+
+  function handleSignal(d, pairId) {
+    if (d._timeout) return showState('waking');
+    if (d._offline) return showState('offline');
+    if (d.rate_limited) return showState('rate', d);
+    if (d.market_closed) return showState('closed');
+    if (d.no_signal) return showState('nosignal');
+    if (d.error) return showState('error', d);
+    let dir = String(d.signal || '').toUpperCase();
     if (dir === 'CALL') dir = 'BUY';
     if (dir === 'PUT') dir = 'SELL';
-    if (dir !== 'BUY' && dir !== 'SELL') {
-      showError('Invalid signal received. Please try again.');
-      return;
-    }
-
-    entryPrice = data.entry_price ?? null;
-    const dirLower = dir.toLowerCase();
-    document.getElementById('signalArrow').textContent = dir === 'BUY' ? '↑' : '↓';
-    document.getElementById('signalArrow').className = 'signal-arrow ' + dirLower;
-    document.getElementById('signalDirection').textContent = dir;
-    document.getElementById('signalDirection').className = 'signal-direction ' + dirLower;
-    document.getElementById('signalGlow').className = 'signal-glow ' + dirLower;
-    document.getElementById('s3PairName').textContent = selectedPair?.name ?? '';
-    document.getElementById('s3PairBadge').textContent = selectedPair?.name ?? '';
-    document.getElementById('s3EntryPrice').textContent = entryPrice != null ? entryPrice : '—';
-    document.getElementById('s3Expiry').textContent = selectedExpiry + ' MIN';
-    document.getElementById('s3Confidence').textContent = data.accuracy != null ? data.accuracy + '%' : '—';
-    const _volCond = data.market_condition || 'normal';
-    const _volMap = {
-      normal: { color: '#00ff88', text: 'Normal market conditions' },
-      low:    { color: '#ffc857', text: 'Low volatility — signal may be less reliable' },
-      high:   { color: '#ff4d4d', text: 'High volatility — expect bigger price swings' },
-    };
-    const _vol = _volMap[_volCond] || _volMap.normal;
-    document.getElementById('volDot').style.cssText = `background:${_vol.color};color:${_vol.color}`;
-    document.getElementById('volLabel').textContent = _vol.text;
-    showAnalysis(data);
-
-    // Reset result overlay to initial state
-    document.getElementById('resultOverlay').classList.remove('show', 'hide');
-    document.getElementById('roCard').classList.remove('visible');
-    document.getElementById('roParticles').innerHTML = '';
-    document.getElementById('roChecking').style.display = '';
-    document.getElementById('roVerdict').style.display = 'none';
-    document.getElementById('roPrices').style.display = 'none';
-    document.getElementById('newSignalBtn').style.display = 'none';
-    document.getElementById('cancelSignalBtn').style.display = '';
-
-    document.getElementById('s2b').classList.add('hidden-left');
-    document.getElementById('s3').classList.remove('hidden', 'hidden-left');
-
-    startCountdown(selectedExpiry * 60, dir);
+    if (dir !== 'BUY' && dir !== 'SELL') return showState('error', { error: 'Неизвестный тип сигнала' });
+    showResult(Object.assign({}, d, { dir, pairId }));
   }
 
-  function showError(message) {
-    document.getElementById('s2b').classList.add('hidden');
-    document.getElementById('s2').classList.remove('hidden', 'hidden-left');
-    document.getElementById('loadingBar').style.width = '0%';
-    const toast = document.getElementById('errorToast');
-    toast.textContent = '⚠ ' + message;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 5000);
+  // ── Screen 5: result ──────────────────────────────────────────────────────
+  function setSigColors(buy) {
+    const s = app.style;
+    s.setProperty('--sig', buy ? UP : DN);
+    s.setProperty('--sig-glow', buy ? 'rgba(34,227,154,0.5)' : 'rgba(255,77,97,0.5)');
+    s.setProperty('--sig-soft', buy ? 'rgba(34,227,154,0.16)' : 'rgba(255,77,97,0.16)');
+    s.setProperty('--sig-border', buy ? 'rgba(34,227,154,0.4)' : 'rgba(255,77,97,0.4)');
   }
-
-  function startCountdown(total, dir) {
-    const startTs = Date.now();
-    const circ = 188.5;
-    const prog = document.getElementById('timerProg');
-    const timerText = document.getElementById('timerText');
-    const timerStatus = document.getElementById('timerStatus');
-    timerStatus.textContent = 'Signal Active';
-    prog.style.stroke = dir === 'BUY' ? 'var(--green)' : 'var(--red)';
-    prog.style.filter = `drop-shadow(0 0 4px ${dir === 'BUY' ? 'var(--green)' : 'var(--red)'})`;
-
-    function fmtTime(s) {
-      const m = Math.floor(s / 60);
-      const sec = String(s % 60).padStart(2, '0');
-      return `${m}:${sec}`;
-    }
-
-    function tick() {
-      const remaining = total - Math.floor((Date.now() - startTs) / 1000);
-      prog.style.strokeDashoffset = circ * (1 - Math.max(remaining, 0) / total);
-      timerText.textContent = fmtTime(Math.max(remaining, 0));
-      if (remaining <= 10) { prog.style.stroke = 'var(--red)'; timerStatus.textContent = 'Closing Soon!'; }
-      if (remaining <= 0) {
-        clearInterval(countdownInterval);
-        document.removeEventListener('visibilitychange', onVisible);
-        timerText.textContent = '0:00';
-        document.getElementById('cancelSignalBtn').style.display = 'none';
-        const _ov = document.getElementById('resultOverlay');
-        const _card = document.getElementById('roCard');
-        _ov.classList.add('show');
-        requestAnimationFrame(() => requestAnimationFrame(() => _card.classList.add('visible')));
-        try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred('warning'); } catch(e) {}
-        fetchResult(dir);
-      }
-    }
-
-    function onVisible() {
-      if (document.visibilityState === 'visible') tick();
-    }
-    document.addEventListener('visibilitychange', onVisible);
-    countdownVisibilityCleanup = () => document.removeEventListener('visibilitychange', onVisible);
-
-    tick();
-    countdownInterval = setInterval(tick, 1000);
+  function marketCondition(raw) {
+    const adx = raw && raw.adx_value;
+    if (adx != null && adx >= 25) return 'Тренд';
+    if (raw && (raw.bb_position === 'near lower band' || raw.bb_position === 'near upper band')) return 'Волатильный';
+    return 'Флэт';
   }
+  const pad2 = n => String(n).padStart(2, '0');
 
-  function fetchResult(dir) {
-    if (!entryPrice || !selectedPair) {
-      document.getElementById('roChecking').style.display = 'none';
-      document.getElementById('newSignalBtn').style.display = '';
-      return;
-    }
-    const direction = dir || document.getElementById('signalDirection').textContent;
-    fetch(`${API_BASE}/result?pair=${encodeURIComponent(selectedPair.name)}&entry=${entryPrice}&direction=${direction}`)
-      .then(r => r.json())
-      .then(data => {
-        document.getElementById('roChecking').style.display = 'none';
-        if (data.result) {
-          const isWin = data.result === 'WIN';
-          const verdictEl = document.getElementById('roVerdict');
-          verdictEl.textContent = isWin ? '✅ WIN' : '❌ LOSS';
-          verdictEl.className = 'ro-verdict ' + (isWin ? 'win' : 'loss');
-          verdictEl.style.display = '';
-          const pricesEl = document.getElementById('roPrices');
-          pricesEl.innerHTML = `Entry: ${data.entry}<br>Exit: ${data.exit}`;
-          pricesEl.style.display = '';
-          setTimeout(() => { if (isWin) spawnConfetti(); else spawnRain(); }, 150);
-          try { window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred(isWin ? 'success' : 'error'); } catch(e) {}
-        }
-        document.getElementById('newSignalBtn').style.display = '';
-      })
-      .catch(() => {
-        document.getElementById('roChecking').style.display = 'none';
-        document.getElementById('newSignalBtn').style.display = '';
-      });
-  }
+  function showResult(d) {
+    const pr = pairById(d.pairId);
+    const buy = d.dir === 'BUY';
+    const minutes = TF_MIN[S.tf];
+    const entry = Number(d.entry_price);
+    const hasEntry = isFinite(entry) && entry > 0;
+    if (hasEntry) rebase(pr.id, entry);
+    const end = Date.now() + minutes * 60000;
+    const e = new Date(end);
+    S.signal = { pairId: pr.id, dir: d.dir, entry: hasEntry ? entry : null, tf: S.tf, accuracy: d.accuracy };
 
-  function newSignal() {
-    clearInterval(countdownInterval); clearInterval(accInterval); countdownVisibilityCleanup?.();
-    const ov = document.getElementById('resultOverlay');
-    ov.classList.remove('show');
-    ov.classList.add('hide');
-    setTimeout(() => {
-      ov.classList.remove('hide');
-      document.getElementById('roCard').classList.remove('visible');
-      document.getElementById('roParticles').innerHTML = '';
-      document.getElementById('s3').classList.add('hidden');
-      document.getElementById('s2').classList.remove('hidden', 'hidden-left');
-      document.getElementById('loadingBar').style.width = '0%';
-      document.getElementById('s2b').classList.add('hidden');
-      collapseAnalysis();
-    }, 270);
-  }
+    setSigColors(buy);
+    $('resTag').textContent = 'СИГНАЛ ИИ · ' + pr.label;
+    $('resDir').textContent = buy ? 'ПОКУПКА' : 'ПРОДАЖА';
+    $('resEn').textContent = buy ? 'BUY' : 'SELL';
+    $('resArrow').style.transform = 'rotate(' + (buy ? 0 : 90) + 'deg)';
+    $('resPair').textContent = pr.label;
+    $('resEntry').textContent = hasEntry ? fmt(pr, entry) : '—';
+    $('resExpiry').textContent = pad2(e.getHours()) + ':' + pad2(e.getMinutes()) + ':' + pad2(e.getSeconds());
+    $('resTf').textContent = '· ' + TF_LOW[S.tf];
+    const cond = marketCondition(d.raw);
+    const ce = $('resCond');
+    ce.textContent = cond;
+    ce.style.color = cond === 'Тренд' ? '#FFFFFF' : cond === 'Волатильный' ? AMBER : MUTE;
+    ce.style.borderColor = cond === 'Тренд' ? 'rgba(255,255,255,0.35)' : cond === 'Волатильный' ? 'rgba(232,184,107,0.4)' : 'rgba(155,161,166,0.35)';
+    renderIndicators(d);
 
-  function toggleAnalysis() {
-    const body = document.getElementById('analysisBody');
-    const chevron = document.getElementById('analysisChevron');
-    const isOpen = body.dataset.open === 'true';
+    go('result');
+    haptic.notify('success');
 
-    if (!isOpen) {
-      // Expand: measure natural height, animate to it
-      body.dataset.open = 'true';
-      chevron.classList.add('open');
-      const h = body.scrollHeight;
-      body.style.maxHeight = h + 'px';
-      body.style.opacity = '1';
-      // After transition completes, remove fixed height so content can reflow freely
-      setTimeout(() => {
-        if (body.dataset.open === 'true') body.style.maxHeight = 'none';
-      }, 370);
-    } else {
-      // Collapse: if maxHeight is 'none', lock it to scrollHeight first so
-      // the browser has a defined start point for the transition
-      body.dataset.open = 'false';
-      chevron.classList.remove('open');
-      if (!body.style.maxHeight || body.style.maxHeight === 'none') {
-        body.style.maxHeight = body.scrollHeight + 'px';
-        body.offsetHeight; // force reflow so the above value is painted
-      }
-      requestAnimationFrame(() => {
-        body.style.maxHeight = '0px';
-        body.style.opacity = '0';
-      });
-    }
-
-    try { window.Telegram?.WebApp?.HapticFeedback?.selectionChanged(); } catch(e) {}
-  }
-
-  function collapseAnalysis() {
-    const body = document.getElementById('analysisBody');
-    // Instant reset — disable transition for this frame so there's no
-    // visible animation when navigating away from s3
-    body.style.transition = 'none';
-    body.dataset.open = 'false';
-    body.style.maxHeight = '0px';
-    body.style.opacity = '0';
-    document.getElementById('analysisChevron').classList.remove('open');
-    requestAnimationFrame(() => { body.style.transition = ''; });
-  }
-
-  function showAnalysis(data) {
-    const votes = data.votes || {};
-    const raw = data.raw || {};
-    const bull = data.bullish_votes ?? 0;
-    const bear = data.bearish_votes ?? 0;
-    const neutral = Object.values(votes).filter(v => v === 'neutral').length;
-    const agreed = Math.max(bull, bear);
-    document.getElementById('analysisSummary').textContent =
-      `${agreed} of ${bull + bear + neutral} indicators agree`;
-
-    const icon = v => v === 'bullish' ? '✅' : v === 'bearish' ? '❌' : '➖';
-    const row = (label, v) =>
-      `<div class="ind-row"><span>${label}</span><span class="ind-vote">${icon(v)}</span></div>`;
-
-    const rsiV = votes.rsi || 'neutral';
-    const rsiN = raw.rsi_value != null ? ` (${raw.rsi_value})` : '';
-    const rsiLbl = rsiV === 'bullish' ? 'Oversold' : rsiV === 'bearish' ? 'Overbought' : 'Neutral';
-
-    const macdV = votes.macd || 'neutral';
-    const macdLbl = raw.macd_status === 'above signal' ? 'Above signal line'
-                  : raw.macd_status === 'below signal' ? 'Below signal line' : 'Neutral';
-
-    const bbV = votes.bbands || 'neutral';
-    const bbLbl = raw.bb_position === 'near lower band' ? 'Near lower band'
-                : raw.bb_position === 'near upper band' ? 'Near upper band' : 'Mid-range';
-
-    const stochV = votes.stoch || 'neutral';
-    const stochN = raw.stoch_k_value != null ? ` (${raw.stoch_k_value})` : '';
-    const stochLbl = stochV === 'bullish' ? 'Oversold' : stochV === 'bearish' ? 'Overbought' : 'Neutral';
-
-    const adxV = votes.adx || 'neutral';
-    const adxN = raw.adx_value != null ? ` (${raw.adx_value})` : '';
-    const adxLbl = adxV === 'bullish'
-      ? `Uptrend (+DI ${raw.di_plus ?? '?'} vs -DI ${raw.di_minus ?? '?'})`
-      : adxV === 'bearish'
-      ? `Downtrend (-DI ${raw.di_minus ?? '?'} vs +DI ${raw.di_plus ?? '?'})`
-      : 'Weak / no trend';
-
-    const wrV = votes.williams_r || 'neutral';
-    const wrN = raw.williams_r_value != null ? ` (${raw.williams_r_value})` : '';
-    const wrLbl = wrV === 'bullish' ? 'Oversold' : wrV === 'bearish' ? 'Overbought' : 'Neutral';
-
-    const emaV = votes.ema_cross || 'neutral';
-    const ema9  = raw.ema9  != null ? raw.ema9  : '?';
-    const ema21 = raw.ema21 != null ? raw.ema21 : '?';
-    const emaLbl = emaV === 'bullish' ? `Bullish (EMA9 ${ema9} > EMA21 ${ema21})`
-                 : emaV === 'bearish' ? `Bearish (EMA9 ${ema9} < EMA21 ${ema21})`
-                 : 'Flat';
-
-    document.getElementById('analysisIndicators').innerHTML =
-      row(`RSI${rsiN} — ${rsiLbl}`, rsiV) +
-      row(`MACD — ${macdLbl}`, macdV) +
-      row(`Bollinger Bands — ${bbLbl}`, bbV) +
-      row(`Stochastic${stochN} — ${stochLbl}`, stochV) +
-      row(`ADX${adxN} — ${adxLbl}`, adxV) +
-      row(`Williams %R${wrN} — ${wrLbl}`, wrV) +
-      row(`EMA Cross — ${emaLbl}`, emaV);
-  }
-
-  function spawnConfetti() {
-    const container = document.getElementById('roParticles');
-    const colors = ['#00ff88','#ffd700','#00b4ff','#ff5fa2','#ffffff'];
-    for (let i = 0; i < 28; i++) {
-      const el = document.createElement('div');
-      const size = (6 + Math.random() * 4).toFixed(0);
-      const isCircle = Math.random() > 0.5;
-      const left = (Math.random() * 100).toFixed(1);
-      const sway = ((Math.random() * 120) - 60).toFixed(0);
-      const rot = (360 + Math.floor(Math.random() * 360));
-      const dur = (1.8 + Math.random() * 1.0).toFixed(2);
-      const delay = (Math.random() * 0.4).toFixed(2);
-      el.style.cssText = `position:absolute;top:-20px;left:${left}vw;`
-        + `width:${size}px;height:${size}px;`
-        + `background:${colors[i % colors.length]};`
-        + `border-radius:${isCircle ? '50%' : '2px'};`
-        + `--sx:${sway}px;--rot:${rot}deg;`
-        + `animation:confettiFall ${dur}s ${delay}s ease-in both;`
-        + `will-change:transform,opacity;`;
-      container.appendChild(el);
-    }
-    setTimeout(() => { if (container) container.innerHTML = ''; }, 3000);
-  }
-
-  function spawnRain() {
-    const container = document.getElementById('roParticles');
-    for (let i = 0; i < 18; i++) {
-      const el = document.createElement('div');
-      const h = (60 + Math.floor(Math.random() * 40));
-      const left = (Math.random() * 100).toFixed(1);
-      const dur = (0.8 + Math.random() * 0.6).toFixed(2);
-      const delay = (Math.random() * 0.5).toFixed(2);
-      el.style.cssText = `position:absolute;top:-${h}px;left:${left}vw;`
-        + `width:2px;height:${h}px;`
-        + `background:linear-gradient(to bottom,transparent,rgba(150,150,150,0.5),transparent);`
-        + `animation:rainFall ${dur}s ${delay}s linear both;`
-        + `will-change:transform,opacity;`;
-      container.appendChild(el);
-    }
-    setTimeout(() => { if (container) container.innerHTML = ''; }, 2500);
-  }
-
-  function cancelSignal() {
-    collapseAnalysis();
-    goBack('s3', 's1'); // goBack clears intervals when from==='s3'
-  }
-
-  function initChart() {
-    const canvas = document.getElementById('chartCanvas');
-    const ctx = canvas.getContext('2d');
-    let W, H, chartTop, chartH, midY;
-
-    function resize() {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-      chartTop = Math.round(H * 0.7);
-      chartH = H - chartTop;
-      midY = chartTop + chartH * 0.42;
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    const CW = 10, GAP = 7, STEP = CW + GAP;
-    const SPEED = 0.5;
-    let candles = [], offset = 0, tick = 0;
-
-    function newCandle(x, prevClose) {
-      const bull = Math.random() > 0.47;
-      const bodySize = 8 + Math.random() * 38;
-      const rev = (midY - prevClose) * 0.1 + (Math.random() - 0.5) * 5;
-      const o = prevClose + rev;
-      const c = o + (bull ? 1 : -1) * bodySize;
-      const clamp = (v) => Math.max(chartTop + 12, Math.min(chartTop + chartH - 90, v));
-      const co = clamp(o), cc = clamp(c);
-      return {
-        x, bull, o: co, c: cc,
-        wt: Math.min(co, cc) - 4 - Math.random() * 11,
-        wb: Math.max(co, cc) + 4 + Math.random() * 11,
-        ph: Math.random() * Math.PI * 2
-      };
-    }
-
-    // Price label
-    const priceEl = document.getElementById('chartPrice');
-    let fakePrice = 1.0842;
-    function updatePrice() {
-      fakePrice += (Math.random() - 0.5) * 0.0012;
-      fakePrice = Math.max(1.06, Math.min(1.12, fakePrice));
-      priceEl.textContent = fakePrice.toFixed(4);
-    }
-    updatePrice();
-    setInterval(updatePrice, 2800);
-
-    let seed = midY;
-    for (let i = 0; i < Math.ceil(W / STEP) + 4; i++) {
-      const c = newCandle(i * STEP, seed); candles.push(c); seed = c.c;
-    }
-
-    function draw() {
-      tick++;
-      ctx.clearRect(0, 0, W, H);
-
-      // Subtle horizontal grid lines
-      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-      ctx.lineWidth = 1;
-      for (let i = 1; i < 5; i++) {
-        const y = chartTop + (i / 5) * chartH;
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-      }
-
-      for (const c of candles) {
-        const x = c.x - offset;
-        if (x + CW < 0 || x > W) continue;
-        const wave = Math.sin(tick * 0.022 + c.ph) * 2.2;
-        const top = Math.min(c.o, c.c) + wave;
-        const bh = Math.max(Math.abs(c.o - c.c), 2);
-        const bodyColor = c.bull ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.22)';
-        const wickColor = c.bull ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)';
-        // Wick
-        ctx.strokeStyle = wickColor; ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(x + CW / 2, c.wt + wave);
-        ctx.lineTo(x + CW / 2, c.wb + wave);
-        ctx.stroke();
-        // Body
-        ctx.fillStyle = bodyColor;
-        ctx.fillRect(x, top, CW, bh);
-      }
-
-      // Keep price label aligned to mid-price line
-      priceEl.style.top = (midY - 9) + 'px';
-
-      offset += SPEED;
-      const last = candles[candles.length - 1];
-      if (last.x - offset < W + STEP) {
-        const nc = newCandle(last.x + STEP, last.c); candles.push(nc);
-      }
-      while (candles.length && candles[0].x - offset < -STEP * 2) candles.shift();
-      requestAnimationFrame(draw);
-    }
+    // Confidence: tick-up counter
+    clearInterval(S.confTimer);
+    const target = Math.max(0, Math.min(100, Number(d.accuracy) || 0));
+    let conf = 0;
+    const draw = () => { $('confTxt').textContent = conf + '%'; $('gaugeArc').setAttribute('stroke-dashoffset', (251.3 * (1 - conf / 100)).toFixed(1)); };
     draw();
+    S.confTimer = setInterval(() => { conf = Math.min(target, conf + 2); draw(); if (conf >= target) clearInterval(S.confTimer); }, 22);
+
+    // Countdown
+    S.cdEnd = end; S.cdTotal = minutes * 60;
+    stopCountdown();
+    tickCountdown();
+    S.cdTimer = setInterval(tickCountdown, 1000);
   }
 
-  // Keep Railway awake — ping every 5 minutes
-  setInterval(() => fetch(`${API_BASE}/ping`).catch(() => {}), 5 * 60 * 1000);
+  function tickCountdown() {
+    const rem = Math.max(0, Math.ceil((S.cdEnd - Date.now()) / 1000));
+    $('cdArc').setAttribute('stroke-dashoffset', (157.1 * (1 - rem / S.cdTotal)).toFixed(1));
+    $('cdTxt').textContent = rem > 0 ? Math.floor(rem / 60) + ':' + pad2(rem % 60) : 'ГОТОВО';
+    if (rem <= 0) {
+      stopCountdown();
+      haptic.notify('warning');
+      setTimeout(() => { if (S.screen === 'result') showOutcome(); }, 700);
+    }
+  }
+  function stopCountdown() { clearInterval(S.cdTimer); S.cdTimer = null; }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && S.cdTimer) tickCountdown(); });
 
-  renderPairs(pairs);
-  initChart();
+  // Indicator details — real values from the backend
+  function renderIndicators(d) {
+    const v = d.votes || {}, r = d.raw || {};
+    const col = vote => vote === 'bullish' ? UP : vote === 'bearish' ? DN : 'rgba(255,255,255,0.35)';
+    const n1 = x => x == null ? '—' : Number(x).toFixed(1);
+    const clamp = x => Math.max(4, Math.min(100, x));
+    const osc = (vote) => vote === 'bullish' ? 'перепродан' : vote === 'bearish' ? 'перекуплен' : 'нейтрально';
+    const bull = d.bullish_votes || 0, bear = d.bearish_votes || 0;
+    const total = Object.keys(v).length || 7;
+    const agree = Math.max(bull, bear);
+    const rows = [
+      { label: 'Совпадение индикаторов', value: agree + ' из ' + total, w: agree / total * 100, color: 'var(--sig)' },
+      { label: 'RSI (14)', value: n1(r.rsi_value) + ' · ' + osc(v.rsi), w: r.rsi_value || 50, color: col(v.rsi) },
+      { label: 'MACD (12, 26, 9)', value: v.macd === 'bullish' ? 'выше сигнальной' : v.macd === 'bearish' ? 'ниже сигнальной' : 'нейтрально', w: v.macd === 'neutral' ? 50 : 100, color: col(v.macd) },
+      { label: 'Полосы Боллинджера', value: v.bbands === 'bullish' ? 'у нижней границы' : v.bbands === 'bearish' ? 'у верхней границы' : 'середина канала', w: v.bbands === 'bullish' ? 12 : v.bbands === 'bearish' ? 88 : 50, color: col(v.bbands) },
+      { label: 'Стохастик (14, 3)', value: n1(r.stoch_k_value) + ' · ' + osc(v.stoch), w: r.stoch_k_value || 50, color: col(v.stoch) },
+      { label: 'ADX (14) · сила тренда', value: n1(r.adx_value) + (v.adx === 'bullish' ? ' · +DI > −DI' : v.adx === 'bearish' ? ' · −DI > +DI' : ' · слабый'), w: (r.adx_value || 0) * 2, color: col(v.adx) },
+      { label: 'Williams %R (14)', value: n1(r.williams_r_value) + ' · ' + osc(v.williams_r), w: r.williams_r_value != null ? r.williams_r_value + 100 : 50, color: col(v.williams_r) },
+      { label: 'EMA 9 / 21', value: v.ema_cross === 'bullish' ? 'EMA9 > EMA21' : v.ema_cross === 'bearish' ? 'EMA9 < EMA21' : 'равны', w: v.ema_cross === 'neutral' ? 50 : 100, color: col(v.ema_cross) },
+    ];
+    $('accBody').innerHTML = rows.map(x => `
+      <div class="ind">
+        <div class="r"><span>${x.label}</span><span>${x.value}</span></div>
+        <div class="bar"><i style="width:${clamp(x.w).toFixed(0)}%;background:${x.color}"></i></div>
+      </div>`).join('');
+  }
+  function collapseDetails() { $('acc').dataset.open = 'false'; $('accBtn').setAttribute('aria-expanded', 'false'); }
+  $('accBtn').addEventListener('click', () => {
+    const open = $('acc').dataset.open !== 'true';
+    $('acc').dataset.open = String(open);
+    $('accBtn').setAttribute('aria-expanded', String(open));
+    haptic.select();
+  });
+
+  // ── Screen 6: outcome (WIN / LOSS via /result) ────────────────────────────
+  function showOutcome() {
+    const sg = S.signal; if (!sg) return go('config');
+    const pr = pairById(sg.pairId);
+    const run = S.run;
+    const oc = $('outCard');
+    oc.className = 'outcard';
+    $('outTag').textContent = 'ИТОГ · ' + pr.label + ' · ' + TF_LOW[sg.tf];
+    $('outEntry').textContent = sg.entry != null ? fmt(pr, sg.entry) : '—';
+    $('outExit').textContent = '—';
+    const dEl = $('outDir');
+    dEl.textContent = sg.dir === 'BUY' ? 'ПОКУПКА' : 'ПРОДАЖА';
+    dEl.style.color = sg.dir === 'BUY' ? UP : DN;
+    $('outMove').textContent = '—'; $('outMove').style.color = '';
+    go('outcome');
+
+    const fail = () => {
+      if (run !== S.run || S.screen !== 'outcome') return;
+      oc.className = 'outcard unknown';
+      $('outBig').textContent = 'Не удалось проверить результат';
+      $('outEn').textContent = 'ПОПРОБУЙТЕ ПОЗЖЕ';
+    };
+    if (sg.entry == null) return fail();
+    fetch(`${API_BASE}/result?pair=${encodeURIComponent(pr.label)}&entry=${sg.entry}&direction=${sg.dir}`)
+      .then(r => r.json())
+      .then(d => {
+        if (run !== S.run || S.screen !== 'outcome') return;
+        if (d.result !== 'WIN' && d.result !== 'LOSS') return fail();
+        const win = d.result === 'WIN';
+        const exit = Number(d.exit);
+        setSigColors(win);
+        app.style.setProperty('--orb', win ? UP : DN);
+        oc.className = 'outcard ' + (win ? 'win' : 'loss');
+        $('outBig').textContent = win ? 'ВЫИГРЫШ' : 'ПРОИГРЫШ';
+        $('outEn').textContent = win ? 'WIN' : 'LOSS';
+        if (isFinite(exit) && exit > 0) {
+          rebase(pr.id, exit);
+          $('outExit').textContent = fmt(pr, exit);
+          const pipSize = pr.q === 'JPY' ? 0.01 : 0.0001;
+          const pips = (exit - sg.entry) / pipSize;
+          const m = $('outMove');
+          m.textContent = (pips > 0 ? '+' : pips < 0 ? '−' : '') + Math.abs(pips).toFixed(1) + ' пипс';
+          m.style.color = pips > 0 ? UP : pips < 0 ? DN : MUTE;
+        }
+        haptic.notify(win ? 'success' : 'error');
+      })
+      .catch(fail);
+  }
+
+  // Shared result / outcome buttons
+  document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.act === 'pairs') { haptic.tap(); go('pairs'); }
+    else startAnalysis();
+  }));
+
+  // ── Screen 7: special states ──────────────────────────────────────────────
+  const ICONS = {
+    moon:  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>',
+    power: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18.4 6.6a9 9 0 11-12.8 0"/><path d="M12 2v10"/></svg>',
+    clock: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    wave:  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l3-7 4 14 3-7h5"/></svg>',
+    alert: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>',
+    wifi:  '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20"/><path d="M8.5 16.4a5 5 0 017 0"/><path d="M5 12.9a10 10 0 015.2-2.8"/><path d="M19 12.9a10 10 0 00-2.5-1.8"/><path d="M12 20h.01"/></svg>',
+  };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function showState(kind, d) {
+    d = d || {};
+    clearInterval(S.retryTimer);
+    const pr = sel();
+    const retry = { label: 'Повторить', fn: startAnalysis };
+    const toConfig = { label: 'Назад', fn: () => { haptic.tap(); go('config'); } };
+    const toPairs = { label: 'Выбрать другую пару', fn: () => { haptic.tap(); go('pairs'); } };
+    const toHub = { label: 'На главную', fn: () => { haptic.tap(); go('hub'); } };
+    const C = {
+      closed:   { icon: 'moon',  title: 'Рынок закрыт', msg: 'Форекс не торгуется по выходным.<br>Возвращайтесь в <b>понедельник</b> — сигналы снова будут доступны.', pri: toHub, sec: null, back: 'hub', haptic: 'warning' },
+      waking:   { icon: 'power', title: 'Сервер просыпается', msg: 'Сервер сигналов запускается после простоя.<br>Попробуйте ещё раз через <b>10 секунд</b>.', pri: retry, sec: toConfig, haptic: 'warning' },
+      offline:  { icon: 'wifi',  title: 'Нет связи с сервером', msg: 'Проверьте интернет-соединение и попробуйте снова.', pri: retry, sec: toConfig, haptic: 'error' },
+      rate:     { icon: 'clock', title: 'Слишком много запросов', msg: 'Можно получать не больше <b>3 сигналов в минуту</b>.<br>Немного подождите.', pri: retry, sec: toConfig, haptic: 'error', wait: d.retry_after_seconds },
+      nosignal: { icon: 'wave',  title: 'Нет чёткого сигнала', msg: 'Индикаторы по <b>' + pr.label + '</b> сейчас расходятся — входить рискованно.<br>Попробуйте через <b>2–3 минуты</b> или выберите другую пару.', pri: retry, sec: toPairs, haptic: 'warning' },
+      error:    { icon: 'alert', title: 'Не удалось получить сигнал', msg: 'Сервер данных временно недоступен.<br>Попробуйте ещё раз через минуту.', pri: retry, sec: toConfig, haptic: 'error', detail: d.error },
+    }[kind];
+
+    stateBack = C.back || 'config';
+    $('stIcon').innerHTML = ICONS[C.icon];
+    $('stTitle').textContent = C.title;
+    $('stMsg').innerHTML = C.msg;
+    const det = $('stDetail');
+    det.hidden = !C.detail;
+    det.textContent = C.detail ? String(C.detail) : '';
+
+    const pri = $('stPri'), sec = $('stSec');
+    pri.onclick = C.pri.fn; pri.textContent = C.pri.label; pri.disabled = false;
+    sec.hidden = !C.sec;
+    if (C.sec) { sec.onclick = C.sec.fn; sec.textContent = C.sec.label; }
+
+    go('state', { title: 'Анализ ИИ' });
+    haptic.notify(C.haptic);
+
+    if (kind === 'rate') {
+      const until = Date.now() + Math.max(1, Math.min(120, Number(C.wait) || 60)) * 1000;
+      const upd = () => {
+        const left = Math.ceil((until - Date.now()) / 1000);
+        if (left > 0) { pri.disabled = true; pri.textContent = 'Повторить через ' + left + ' с'; }
+        else { pri.disabled = false; pri.textContent = 'Повторить'; clearInterval(S.retryTimer); }
+      };
+      upd();
+      S.retryTimer = setInterval(upd, 1000);
+    }
+  }
+
+  // ── Hub ───────────────────────────────────────────────────────────────────
+  $('statPairs').textContent = pairs.length;
+  $('ctaBtn').addEventListener('click', () => { haptic.tap(); go('pairs'); });
+
+  // ── Main loop ─────────────────────────────────────────────────────────────
+  function tick() {
+    tickPrices();
+    candles.shift(); candles.push(nextCandle(candles[candles.length - 1].c));
+    if (S.screen === 'hub') { renderTicker(); renderCandles(); }
+    else if (S.screen === 'pairs') updatePairPrices();
+    else if (S.screen === 'config') updateConfigPrice();
+  }
+
+  buildTicker();
+  seedCandles();
+  renderTicker();
+  requestAnimationFrame(renderCandles);
+  setInterval(tick, 1000);
+  let resizeT;
+  window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { seedCandles(); renderCandles(); }, 200); });
+
+  // Realistic starting levels: today's reference rates (falls back to built-in values).
+  fetch(RATES_URL).then(r => r.json()).then(j => {
+    if (!j || !j.rates) return;
+    const rates = Object.assign({ USD: 1 }, j.rates);
+    if (Object.keys(CUR).every(k => rates[k] > 0)) {
+      const keep = S.signal ? { id: S.signal.pairId, p: pairById(S.signal.pairId).p } : null;
+      applyRates(rates);
+      if (keep) rebase(keep.id, keep.p);
+      renderTicker();
+    }
+  }).catch(() => {});
+
+  // Keep the Railway backend warm while the app is open.
+  setInterval(() => fetch(`${API_BASE}/ping`).catch(() => {}), 5 * 60 * 1000);
+})();
 </script>
 </body>
 </html>
